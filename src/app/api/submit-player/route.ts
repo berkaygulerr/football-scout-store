@@ -14,11 +14,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { id, name, age, team, marketValue } = parsed.data;
+    const { id, name, age, team, market_value } = parsed.data;
 
     const { error } = await supabase
       .from("players")
-      .insert([{ id, name, age, team, market_value: marketValue }]);
+      .insert([{ id, name, age, team, market_value }]);
 
     if (error) {
       console.error(error);

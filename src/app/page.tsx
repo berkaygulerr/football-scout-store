@@ -4,10 +4,24 @@ import { fetchPlayers } from "@/utils/fetchPlayers";
 import PlayerInput from "@/components/PlayerInput";
 import { formatNumber } from "@/utils/formatNumber";
 
+type Player = {
+  id: number;
+  name: string;
+  team: string;
+  age: number;
+  market_value: number;
+};
+
 export default function PlayersList() {
-  const [players, setPlayers] = useState<any[]>([]);
-  const [selectedPlayer, setSelectedPlayer] = useState<any>({});
-  const [currentDatas, setCurrentDatas] = useState<any[]>([]);
+  const [players, setPlayers] = useState<Player[]>([]);
+  const [selectedPlayer, setSelectedPlayer] = useState<Player>({
+    id: 0,
+    name: "",
+    team: "",
+    age: 0,
+    market_value: 0,
+  });
+  const [currentDatas, setCurrentDatas] = useState<Player[]>([]);
 
   const getData = async () => {
     const data = await fetchPlayers();
@@ -17,7 +31,7 @@ export default function PlayersList() {
   useEffect(() => {
     async function fetchCurrentDatas() {
       const results = await Promise.all(
-        players.map(async (player: any) => {
+        players.map(async (player: Player) => {
           const res = await fetch(`/api/search-player?id=${player.id}`);
           const data = await res.json();
           return { id: player.id, data };
@@ -42,7 +56,7 @@ export default function PlayersList() {
     getData();
   }, []);
 
-  const selectPlayer = async (player: any) => {
+  const selectPlayer = async (player: Player) => {
     setSelectedPlayer(player);
   };
 
@@ -97,8 +111,8 @@ export default function PlayersList() {
                 <li>Age: {selectedPlayer.age}</li>
                 <li>
                   Market Value: €
-                  {selectedPlayer.marketValue
-                    ? formatNumber(selectedPlayer.marketValue)
+                  {selectedPlayer.market_value
+                    ? formatNumber(selectedPlayer.market_value)
                     : ""}
                 </li>
               </ul>
@@ -111,7 +125,7 @@ export default function PlayersList() {
             </div>
           </form>
         </li>
-        {players?.map((player: any) => (
+        {players?.map((player) => (
           <li
             key={player.id}
             className="bg-white rounded-2xl shadow-md p-4 border hover:shadow-lg transition"
@@ -142,8 +156,8 @@ export default function PlayersList() {
             </p>
             <p className="text-gray-800 font-medium mt-2">
               Market Value: €
-              {currentDatas[player.id]?.marketValue
-                ? formatNumber(currentDatas[player.id]?.marketValue)
+              {currentDatas[player.id]?.market_value
+                ? formatNumber(currentDatas[player.id]?.market_value)
                 : "Yükleniyor..."}
             </p>
           </li>

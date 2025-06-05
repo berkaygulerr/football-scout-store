@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
           (1000 * 60 * 60 * 24 * 365.25)
       ),
       team: player.team?.name ?? null,
-      marketValue: player.proposedMarketValue ?? null,
+      market_value: player.proposedMarketValue ?? null,
     };
 
     return NextResponse.json(formattedData, { status: 200 });

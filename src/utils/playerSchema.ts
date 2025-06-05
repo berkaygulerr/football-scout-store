@@ -5,7 +5,7 @@ export const playerSchema = z.object({
   name: z.string().min(1, "İsim gerekli"),
   age: z.number().min(15).max(50),
   team: z.string().min(1),
-  marketValue: z.number().min(0),
+  market_value: z.number().min(0),
 });
 
 export type Player = z.infer<typeof playerSchema>;
