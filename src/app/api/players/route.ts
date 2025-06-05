@@ -26,5 +26,11 @@ export async function GET(req: NextRequest) {
       }));
 
     return NextResponse.json(players);
-  } catch (error) {}
+  } catch (error) {
+    console.error("API Error:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
 }
