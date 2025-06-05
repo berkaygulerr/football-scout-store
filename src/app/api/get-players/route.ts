@@ -1,4 +1,5 @@
-// src/app/api/get-players/route.ts
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 
