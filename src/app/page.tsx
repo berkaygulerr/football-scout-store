@@ -3,14 +3,7 @@ import { useEffect, useState } from "react";
 import { fetchPlayers } from "@/utils/fetchPlayers";
 import PlayerInput from "@/components/PlayerInput";
 import { formatNumber } from "@/utils/formatNumber";
-
-type Player = {
-  id: number;
-  name: string;
-  team: string;
-  age: number;
-  market_value: number;
-};
+import { Player } from "@/types/player.types";
 
 export default function PlayersList() {
   const [players, setPlayers] = useState<Player[]>([]);

@@ -1,4 +1,6 @@
-export async function createPlayer(player: any) {
+import { Player } from "@/types/player.types";
+
+export async function createPlayer(player: Player) {
   const response = await fetch("/api/submit-player", {
     method: "POST",
     headers: {

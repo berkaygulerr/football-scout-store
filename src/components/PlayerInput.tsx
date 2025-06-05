@@ -1,14 +1,19 @@
 "use client";
 import { useState, useEffect } from "react";
+import { Player } from "@/types/player.types";
 
-export default function PlayerInput({ onSelectPlayer }: any) {
+type Props = {
+  onSelectPlayer: (player: Player) => void;
+};
+
+export default function PlayerInput({ onSelectPlayer }: Props) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<
-    { id: Number; name: string; team: string }[]
+    { id: number; name: string; team: string }[]
   >([]);
   const [showList, setShowList] = useState(false);
 
-  const fetchPlayer = async (id: Number) => {
+  const fetchPlayer = async (id: number) => {
     const data = await fetch(`/api/search-player?id=${id}`);
     const player = await data.json();
 
