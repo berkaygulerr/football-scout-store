@@ -27,6 +27,7 @@ export default function PlayersList() {
         players.map(async (player: Player) => {
           const res = await fetch(`/api/search-player?id=${player.id}`, {
             cache: "no-store",
+            next: { revalidate: 0 },
           });
           const data = await res.json();
           return { id: player.id, data };
@@ -64,6 +65,7 @@ export default function PlayersList() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(selectedPlayer),
         cache: "no-store",
+        next: { revalidate: 0 },
       });
 
       if (!res.ok) throw new Error("İstek başarısız");
@@ -79,6 +81,7 @@ export default function PlayersList() {
       const res = await fetch(`/api/delete-player?id=${id}`, {
         method: "DELETE",
         cache: "no-store",
+        next: { revalidate: 0 },
       });
 
       if (!res.ok) {
