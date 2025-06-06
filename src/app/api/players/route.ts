@@ -26,7 +26,13 @@ export async function GET(req: NextRequest) {
         team: item.entity.team?.name ?? "No team",
       }));
 
-    return NextResponse.json(players);
+    return NextResponse.json(players, {
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control":
+          "no-store, no-cache, must-revalidate, proxy-revalidate",
+      },
+    });
   } catch (error) {
     console.error("API Error:", error);
     return NextResponse.json(

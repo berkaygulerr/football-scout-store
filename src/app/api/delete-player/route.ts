@@ -8,7 +8,17 @@ export async function DELETE(request: Request) {
   const id = searchParams.get("id");
 
   if (!id) {
-    return NextResponse.json({ error: "Invalid id" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid id" },
+      {
+        status: 400,
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control":
+            "no-store, no-cache, must-revalidate, proxy-revalidate",
+        },
+      }
+    );
   }
 
   const { error } = await supabase.from("players").delete().eq("id", id);

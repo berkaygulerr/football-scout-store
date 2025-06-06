@@ -27,7 +27,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Veritabanı hatası" }, { status: 500 });
     }
 
-    return NextResponse.json({ message: "Oyuncu eklendi" }, { status: 200 });
+    return NextResponse.json(
+      { message: "Oyuncu eklendi" },
+      {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control":
+            "no-store, no-cache, must-revalidate, proxy-revalidate",
+        },
+      }
+    );
   } catch (err) {
     console.error(err);
     return NextResponse.json({ error: "Sunucu hatası" }, { status: 500 });

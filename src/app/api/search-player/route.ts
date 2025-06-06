@@ -29,7 +29,14 @@ export async function GET(req: NextRequest) {
       market_value: player.proposedMarketValue ?? null,
     };
 
-    return NextResponse.json(formattedData, { status: 200 });
+    return NextResponse.json(formattedData, {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control":
+          "no-store, no-cache, must-revalidate, proxy-revalidate",
+      },
+    });
   } catch (error) {
     console.error("API Error:", error);
     return NextResponse.json(
