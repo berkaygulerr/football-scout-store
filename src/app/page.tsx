@@ -25,7 +25,9 @@ export default function PlayersList() {
     async function fetchCurrentDatas() {
       const results = await Promise.all(
         players.map(async (player: Player) => {
-          const res = await fetch(`/api/search-player?id=${player.id}`);
+          const res = await fetch(`/api/search-player?id=${player.id}`, {
+            cache: "no-store",
+          });
           const data = await res.json();
           return { id: player.id, data };
         })
@@ -61,6 +63,7 @@ export default function PlayersList() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(selectedPlayer),
+        cache: "no-store",
       });
 
       if (!res.ok) throw new Error("İstek başarısız");
@@ -75,6 +78,7 @@ export default function PlayersList() {
     try {
       const res = await fetch(`/api/delete-player?id=${id}`, {
         method: "DELETE",
+        cache: "no-store",
       });
 
       if (!res.ok) {

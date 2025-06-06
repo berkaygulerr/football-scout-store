@@ -7,6 +7,7 @@ export async function createPlayer(player: Player) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(player),
+    cache: "no-store",
   });
 
   if (!response.ok) {
