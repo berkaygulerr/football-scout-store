@@ -1,10 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import { redis } from "@/lib/redis";
 
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 export async function GET() {
   try {
     const { data: players, error } = await supabase.from("players").select("id");
@@ -32,8 +28,6 @@ export async function GET() {
         const data = await response.json();
         await redis.set(`player:${player.id}`, JSON.stringify(data));
         console.log(`Player ${player.id} data cached in Redis.`);
-
-        await sleep(20000); // 20 saniye bekle
       } catch (err) {
         console.error(`Error fetching player ${player.id}:`, err);
       }
