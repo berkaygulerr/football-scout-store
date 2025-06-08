@@ -3,6 +3,7 @@ export const revalidate = 0;
 
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { redis } from "@/lib/redis";
 
 export async function DELETE(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -23,6 +24,7 @@ export async function DELETE(request: Request) {
   }
 
   const { error } = await supabase.from("players").delete().eq("id", id);
+  await redis.del(`player:${id}`);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

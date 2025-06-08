@@ -23,33 +23,32 @@ export default function PlayersList() {
 
   useEffect(() => {
     async function fetchCurrentDatas() {
-      const results = await Promise.all(
-        players.map(async (player: Player) => {
-          const res = await fetch(`/api/current-player?id=${player.id}`, {
-            cache: "no-store",
-            next: { revalidate: 0 },
-          });
+      if (!players?.length) return;
 
-          if (res.ok) {
-            const data = await res.json();
-            return { id: player.id, data };
-          } else {
-            return { id: player.id, data: null };
-          }
-        })
-      );
+      const ids = players.map((p) => p.id);
 
+      const res = await fetch("/api/current-players", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids }),
+      });
+
+      if (!res.ok) {
+        setCurrentDatas({});
+        return;
+      }
+
+      const playersData: { id: string; data: any }[] = await res.json();
       const dataMap: Record<string, any> = {};
-      results.forEach(({ id, data }) => {
+
+      playersData.forEach(({ id, data }) => {
         if (data) dataMap[id] = data;
       });
 
       setCurrentDatas(dataMap);
     }
 
-    if (players?.length) {
-      fetchCurrentDatas();
-    }
+    fetchCurrentDatas();
   }, [players]);
 
   useEffect(() => {

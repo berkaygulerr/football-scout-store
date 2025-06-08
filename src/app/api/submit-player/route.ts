@@ -4,6 +4,7 @@ export const revalidate = 0;
 import { NextRequest, NextResponse } from "next/server";
 import { playerSchema } from "@/utils/playerSchema";
 import { supabase } from "@/lib/supabase";
+import { redis } from "@/lib/redis";
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,11 +18,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { id, name, age, team, market_value } = parsed.data;
-
     const { error } = await supabase
       .from("players")
-      .insert([{ id, name, age, team, market_value }]);
+      .insert([parsed.data]);
+
+    await redis.set(`player:${parsed.data.id}`, JSON.stringify(parsed.data));
 
     if (error) {
       console.error(error);
