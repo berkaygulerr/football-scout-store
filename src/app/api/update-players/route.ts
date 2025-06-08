@@ -20,7 +20,7 @@ export async function GET() {
 
     for (const player of players) {
       try {
-        const response = await fetch(`https://external.api/api/search-player?id=${player.id}`, {
+        const response = await fetch(`/api/search-player?id=${player.id}`, {
           cache: "no-store",
         });
 

@@ -25,7 +25,7 @@ export default function PlayersList() {
     async function fetchCurrentDatas() {
       const results = await Promise.all(
         players.map(async (player: Player) => {
-          const res = await fetch(`/api/player-data?id=${player.id}`, {
+          const res = await fetch(`/api/current-player?id=${player.id}`, {
             cache: "no-store",
             next: { revalidate: 0 },
           });
