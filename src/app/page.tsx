@@ -14,7 +14,7 @@ export default function PlayersList() {
     age: 0,
     market_value: 0,
   });
-  const [currentDatas, setCurrentDatas] = useState<Player[]>([]);
+  const [currentDatas, setCurrentDatas] = useState<any>({});
 
   const getData = async () => {
     const data = await fetchPlayers();
@@ -25,19 +25,23 @@ export default function PlayersList() {
     async function fetchCurrentDatas() {
       const results = await Promise.all(
         players.map(async (player: Player) => {
-          const res = await fetch(`/api/search-player?id=${player.id}`, {
+          const res = await fetch(`/api/player-data?id=${player.id}`, {
             cache: "no-store",
             next: { revalidate: 0 },
           });
-          const data = await res.json();
-          return { id: player.id, data };
+
+          if (res.ok) {
+            const data = await res.json();
+            return { id: player.id, data };
+          } else {
+            return { id: player.id, data: null };
+          }
         })
       );
 
-      // Obje haline getir
-      const dataMap: any = {};
+      const dataMap: Record<string, any> = {};
       results.forEach(({ id, data }) => {
-        dataMap[id] = data;
+        if (data) dataMap[id] = data;
       });
 
       setCurrentDatas(dataMap);

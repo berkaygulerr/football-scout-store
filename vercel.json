@@ -1,0 +1,6 @@
+{
+  "crons": [{
+    "path": "/api/update-players",
+    "schedule": "*/5 * * * *"
+  }]
+}
