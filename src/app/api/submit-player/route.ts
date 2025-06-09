@@ -1,10 +1,11 @@
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-
-import { NextRequest, NextResponse } from "next/server";
-import { playerSchema } from "@/utils/playerSchema";
+import { NextRequest } from "next/server";
+import { playerSchema } from "@/types/player.types";
 import { supabase } from "@/lib/supabase";
 import { redis } from "@/lib/redis";
+import { createApiResponse, createApiError, dynamicConfig } from "@/lib/api-utils";
+import { UI_MESSAGES } from "@/lib/constants";
+
+export const { dynamic, revalidate } = dynamicConfig;
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,9 +13,9 @@ export async function POST(request: NextRequest) {
     const parsed = playerSchema.safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Geçersiz veri", issues: parsed.error.format() },
-        { status: 400 }
+      return createApiError(
+        `Geçersiz veri: ${parsed.error.issues.map(i => i.message).join(", ")}`,
+        400
       );
     }
 
@@ -22,26 +23,17 @@ export async function POST(request: NextRequest) {
       .from("players")
       .insert([parsed.data]);
 
-    await redis.set(`player:${parsed.data.id}`, JSON.stringify(parsed.data));
-
     if (error) {
-      console.error(error);
-      return NextResponse.json({ error: "Veritabanı hatası" }, { status: 500 });
+      console.error("Supabase error:", error);
+      return createApiError("Veritabanı hatası", 500);
     }
 
-    return NextResponse.json(
-      { message: "Oyuncu eklendi" },
-      {
-        status: 200,
-        headers: {
-          "Content-Type": "application/json",
-          "Cache-Control":
-            "no-store, no-cache, must-revalidate, proxy-revalidate",
-        },
-      }
-    );
+    // Redis'e de kaydet
+    await redis.set(`player:${parsed.data.id}`, JSON.stringify(parsed.data));
+
+    return createApiResponse({ message: UI_MESSAGES.ADD_SUCCESS });
   } catch (err) {
-    console.error(err);
-    return NextResponse.json({ error: "Sunucu hatası" }, { status: 500 });
+    console.error("Submit player error:", err);
+    return createApiError("Sunucu hatası", 500);
   }
 }

@@ -1,171 +1,162 @@
 "use client";
-import { useEffect, useState } from "react";
-import { fetchPlayers } from "@/utils/fetchPlayers";
-import PlayerInput from "@/components/PlayerInput";
-import { formatNumber } from "@/utils/formatNumber";
-import { Player } from "@/types/player.types";
+import { useEffect } from 'react';
+import { usePlayers } from "@/hooks/usePlayers";
+import { useFilters } from "@/hooks/useFilters";
+import { usePagination } from "@/hooks/usePagination";
+import PlayerList from "@/components/PlayerList";
+import SidePanel from "@/components/SidePanel";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { Button } from "@/components/ui/Button";
 
-export default function PlayersList() {
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [selectedPlayer, setSelectedPlayer] = useState<Player>({
-    id: 0,
-    name: "",
-    team: "",
-    age: 0,
-    market_value: 0,
-  });
-  const [currentDatas, setCurrentDatas] = useState<any>({});
+export default function Home() {
+  const {
+    players,
+    currentPlayersData,
+    isLoading,
+    error,
+    loadPlayers,
+    deletePlayer,
+  } = usePlayers();
 
-  const getData = async () => {
-    const data = await fetchPlayers();
-    setPlayers(data);
-  };
+  const {
+    filters,
+    filteredAndSortedPlayers,
+    updateFilter,
+    resetFilters,
+    uniqueTeams,
+    totalFilteredCount,
+    totalCount,
+  } = useFilters(players);
 
+  const {
+    currentPage,
+    pageSize,
+    totalPages,
+    hasNextPage,
+    hasPrevPage,
+    paginatedItems,
+    goToPage,
+    nextPage,
+    prevPage,
+    setPageSize,
+    resetPage,
+    getPageNumbers,
+    startIndex,
+    endIndex,
+  } = usePagination(filteredAndSortedPlayers, 12);
+
+  // Reset to first page when filters actually change, not when items change
   useEffect(() => {
-    async function fetchCurrentDatas() {
-      if (!players?.length) return;
-
-      const ids = players.map((p) => p.id);
-
-      const res = await fetch("/api/current-players", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids }),
-      });
-
-      if (!res.ok) {
-        setCurrentDatas({});
-        return;
-      }
-
-      const playersData: { id: string; data: any }[] = await res.json();
-      const dataMap: Record<string, any> = {};
-
-      playersData.forEach(({ id, data }) => {
-        if (data) dataMap[id] = data;
-      });
-
-      setCurrentDatas(dataMap);
+    // Only reset if we're not on the first page and filters actually changed
+    if (currentPage > 1) {
+      resetPage();
     }
+  }, [
+    filters.searchQuery, 
+    filters.teamFilter, 
+    filters.ageRange[0], 
+    filters.ageRange[1], 
+    filters.marketValueRange[0], 
+    filters.marketValueRange[1], 
+    filters.sortBy, 
+    filters.sortOrder
+  ]);
 
-    fetchCurrentDatas();
-  }, [players]);
-
-  useEffect(() => {
-    getData();
-  }, []);
-
-  const selectPlayer = async (player: Player) => {
-    setSelectedPlayer(player);
-  };
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
+  const handlePlayerDeleted = async (id: number) => {
     try {
-      const res = await fetch("/api/submit-player", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(selectedPlayer),
-        cache: "no-store",
-        next: { revalidate: 0 },
-      });
-
-      if (!res.ok) throw new Error("İstek başarısız");
-
-      getData();
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const handleDeletePlayer = async (id: number) => {
-    try {
-      const res = await fetch(`/api/delete-player?id=${id}`, {
-        method: "DELETE",
-        cache: "no-store",
-        next: { revalidate: 0 },
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Silme başarısız");
-      }
-
-      getData(); // Listeyi yenile
+      await deletePlayer(id);
     } catch (error) {
       console.error("Silme hatası:", error);
     }
   };
 
+  if (error) {
   return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 px-6 py-4 rounded-lg">
+            <div className="flex items-center gap-3">
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
     <div>
-      <h1 className="text-2xl font-bold mb-4">Player List</h1>
-
-      <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-6">
-        <li className="bg-white rounded-2xl shadow-md p-4 border hover:shadow-lg transition">
-          <h2 className="text-xl font-semibold mb-4">Yeni Oyuncu Gir</h2>
-          <form onSubmit={handleSubmit}>
-            <div className="flex flex-col gap-4">
-              <PlayerInput onSelectPlayer={selectPlayer} />
-              <ul>
-                <li>Id: {selectedPlayer.id}</li>
-                <li>Team: {selectedPlayer.team}</li>
-                <li>Age: {selectedPlayer.age}</li>
-                <li>
-                  Market Value: €
-                  {selectedPlayer.market_value
-                    ? formatNumber(selectedPlayer.market_value)
-                    : ""}
-                </li>
-              </ul>
-              <button
-                type="submit"
-                className="bg-green-500 text-white px-6 py-2 rounded w-full"
-              >
-                Ekle
-              </button>
+                <h3 className="font-medium">Hata Oluştu</h3>
+                <p className="text-sm mt-1">{error}</p>
+              </div>
             </div>
-          </form>
-        </li>
-        {players?.map((player) => (
-          <li
-            key={player.id}
-            className="bg-white rounded-2xl shadow-md p-4 border hover:shadow-lg transition"
-          >
-            <div className="flex justify-between">
-              <h2 className="text-xl font-semibold mb-2">{player.name}</h2>
-              <button
-                type="button"
-                className="py-1 px-3 bg-red-500 rounded-md text-white"
-                onClick={() => handleDeletePlayer(player.id)}
-              >
-                Sil
-              </button>
+            <Button 
+              variant="outline"
+              onClick={loadPlayers}
+              className="mt-3"
+            >
+              Tekrar Dene
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <main className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Header */}
+      <div className="bg-white dark:bg-gray-800 shadow-sm">
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">⚽ Oyuncu Yönetimi</h1>
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <Button
+              variant="outline"
+              onClick={loadPlayers}
+              isLoading={isLoading}
+              size="sm"
+            >
+              <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Yenile
+            </Button>
+          </div>
+        </div>
             </div>
 
-            <p className="text-gray-600">Age: {player.age}</p>
-            <p className="text-gray-600">Team: {player.team}</p>
-            <p className="text-gray-800 font-medium mt-2">
-              Market Value: €{formatNumber(player.market_value)}
-            </p>
-            <br />
-            <h2 className="text-xl font-semibold mb-2">Güncel</h2>
-            <p className="text-gray-600">
-              Age: {currentDatas[player.id]?.age ?? "Yükleniyor..."}
-            </p>
-            <p className="text-gray-600">
-              Team: {currentDatas[player.id]?.team ?? "Yükleniyor..."}
-            </p>
-            <p className="text-gray-800 font-medium mt-2">
-              Market Value: €
-              {currentDatas[player.id]?.market_value
-                ? formatNumber(currentDatas[player.id]?.market_value)
-                : "Yükleniyor..."}
-            </p>
-          </li>
-        ))}
-      </ul>
+      <div className="container mx-auto p-4 lg:p-8">
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Sol Panel - Mobilde üstte */}
+          <SidePanel
+            filters={filters}
+            updateFilter={updateFilter}
+            resetFilters={resetFilters}
+            uniqueTeams={uniqueTeams}
+            totalCount={totalCount}
+            filteredCount={totalFilteredCount}
+            onPlayerAdded={loadPlayers}
+          />
+
+          {/* Sağ Panel - Ana içerik */}
+          <div className="flex-1">
+            <PlayerList
+              isLoading={isLoading}
+              paginatedItems={paginatedItems}
+              currentPlayersData={currentPlayersData}
+              onDelete={handlePlayerDeleted}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              totalItems={totalFilteredCount}
+              startIndex={startIndex}
+              endIndex={endIndex}
+              hasNextPage={hasNextPage}
+              hasPrevPage={hasPrevPage}
+              goToPage={goToPage}
+              nextPage={nextPage}
+              prevPage={prevPage}
+              setPageSize={setPageSize}
+              getPageNumbers={getPageNumbers}
+            />
+          </div>
+        </div>
     </div>
+    </main>
   );
 }

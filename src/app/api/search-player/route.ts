@@ -1,23 +1,24 @@
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+import { NextRequest } from "next/server";
+import { createApiResponse, createApiError, dynamicConfig } from "@/lib/api-utils";
 
-import { NextRequest, NextResponse } from "next/server";
+export const { dynamic, revalidate } = dynamicConfig;
 
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const id = searchParams.get("id")?.toLowerCase();
+    const id = searchParams.get("id");
 
-    const res = await fetch(`${process.env.API_URL}/player/${id}`);
-
-    if (!res.ok) {
-      return NextResponse.json(
-        { error: "API request failed" },
-        { status: res.status }
-      );
+    if (!id) {
+      return createApiError("ID parametresi gerekli", 400);
     }
 
-    const { player } = await res.json();
+    const response = await fetch(`${process.env.API_URL}/player/${id}`);
+
+    if (!response.ok) {
+      return createApiError("Dış API isteği başarısız", response.status);
+    }
+
+    const { player } = await response.json();
 
     const formattedData = {
       id: player.id,
@@ -26,23 +27,13 @@ export async function GET(req: NextRequest) {
         (Date.now() - player.dateOfBirthTimestamp * 1000) /
           (1000 * 60 * 60 * 24 * 365.25)
       ),
-      team: player.team?.name ?? null,
-      market_value: player.proposedMarketValue ?? null,
+      team: player.team?.name ?? "Takım bilgisi yok",
+      market_value: player.proposedMarketValue ?? 0,
     };
 
-    return NextResponse.json(formattedData, {
-      status: 200,
-      headers: {
-        "Content-Type": "application/json",
-        "Cache-Control":
-          "no-store, no-cache, must-revalidate, proxy-revalidate",
-      },
-    });
+    return createApiResponse(formattedData);
   } catch (error) {
-    console.error("API Error:", error);
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
+    console.error("Search player error:", error);
+    return createApiError("Sunucu hatası", 500);
   }
 }

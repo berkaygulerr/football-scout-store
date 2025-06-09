@@ -1,23 +1,23 @@
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-
-import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { createApiResponse, createApiError, dynamicConfig } from "@/lib/api-utils";
+
+export const { dynamic, revalidate } = dynamicConfig;
 
 export async function GET() {
-  const { data, error } = await supabase
-    .from("players")
-    .select("*")
-    .order("player_id", { ascending: false });
+  try {
+    const { data, error } = await supabase
+      .from("players")
+      .select("*")
+      .order("player_id", { ascending: false });
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) {
+      console.error("Supabase error:", error);
+      return createApiError(error.message, 500);
+    }
+
+    return createApiResponse(data || []);
+  } catch (err) {
+    console.error("Get players error:", err);
+    return createApiError("Sunucu hatası", 500);
   }
-
-  return NextResponse.json(data, {
-    headers: {
-      "Content-Type": "application/json",
-      "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-    },
-  });
 }

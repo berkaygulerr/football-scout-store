@@ -1,44 +1,53 @@
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+import { NextRequest } from "next/server";
+import { createApiResponse, createApiError, dynamicConfig } from "@/lib/api-utils";
+import { API_CONFIG, UI_MESSAGES } from "@/lib/constants";
+import { validateSearchQuery } from "@/lib/validators";
 
-import { NextRequest, NextResponse } from "next/server";
+export const { dynamic, revalidate } = dynamicConfig;
 
+/**
+ * Oyuncu arama endpoint'i
+ */
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const query = searchParams.get("search")?.toLowerCase();
-
-  if (!query) {
-    return NextResponse.json([], { status: 200 });
-  }
-
   try {
-    const externalRes = await fetch(
-      `${process.env.API_URL}/search/player-team-persons?q=${encodeURIComponent(
-        query
-      )}`
-    );
-    const data = await externalRes.json();
+    const { searchParams } = new URL(req.url);
+    const query = searchParams.get("search")?.toLowerCase().trim();
 
+    // Validate query
+    const validationError = validateSearchQuery(query);
+    if (validationError) {
+      return createApiError(validationError, 400);
+    }
+
+    if (!query) {
+      return createApiResponse([]);
+    }
+
+    // External API call
+    const externalResponse = await fetch(
+      `${process.env.API_URL}/search/player-team-persons?q=${encodeURIComponent(query)}`
+    );
+
+    if (!externalResponse.ok) {
+      console.error("External API Error:", await externalResponse.text());
+      return createApiError(UI_MESSAGES.API_ERROR, externalResponse.status);
+    }
+
+    const data = await externalResponse.json();
+
+    // Process and filter results
     const players = data.results
-      .filter((item: any) => item.entity.team?.sport?.name === "Football")
+      ?.filter((item: any) => item.entity.team?.sport?.name === "Football")
+      .slice(0, API_CONFIG.MAX_SEARCH_RESULTS)
       .map((item: any) => ({
         id: item.entity.id,
         name: item.entity.name,
-        team: item.entity.team?.name ?? "No team",
-      }));
+        team: item.entity.team?.name ?? UI_MESSAGES.NO_TEAM,
+      })) || [];
 
-    return NextResponse.json(players, {
-      headers: {
-        "Content-Type": "application/json",
-        "Cache-Control":
-          "no-store, no-cache, must-revalidate, proxy-revalidate",
-      },
-    });
+    return createApiResponse(players);
   } catch (error) {
-    console.error("API Error:", error);
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
+    console.error("Players search error:", error);
+    return createApiError(UI_MESSAGES.SEARCH_ERROR);
   }
 }

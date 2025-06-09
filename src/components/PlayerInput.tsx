@@ -1,69 +1,68 @@
 "use client";
-import { useState, useEffect } from "react";
-import { Player } from "@/types/player.types";
+import { usePlayerSearch } from "@/hooks/usePlayerSearch";
+import { PlayerService } from "@/services/player.service";
 
-type Props = {
-  onSelectPlayer: (player: Player) => void;
-};
+interface PlayerInputProps {
+  onSelect: (playerId: number) => void;
+  disabled?: boolean;
+  className?: string;
+}
 
-export default function PlayerInput({ onSelectPlayer }: Props) {
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState<
-    { id: number; name: string; team: string }[]
-  >([]);
-  const [showList, setShowList] = useState(false);
+export default function PlayerInput({ onSelect, disabled, className }: PlayerInputProps) {
+  const {
+    query,
+    results,
+    isSearching,
+    showResults,
+    updateQuery,
+    hideResults,
+    setQuery,
+  } = usePlayerSearch();
 
-  const fetchPlayer = async (id: number) => {
-    const data = await fetch(`/api/search-player?id=${id}`);
-    const player = await data.json();
-
-    onSelectPlayer(player);
+  const handlePlayerSelect = async (playerId: number, playerName: string) => {
+    setQuery(playerName);
+    hideResults();
+    onSelect(playerId);
   };
 
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (query.trim() === "") {
-        setResults([]);
-        return;
-      }
-
-      fetch(`/api/players?search=${encodeURIComponent(query)}`)
-        .then((res) => res.json())
-        .then((data) => setResults(data))
-        .catch(() => setResults([]));
-    }, 300);
-
-    return () => clearTimeout(timeout);
-  }, [query]);
-
   return (
-    <div className="relative w-full">
+    <div className={`relative w-full ${className || ''}`}>
       <input
         type="text"
         placeholder="Futbolcu Adı"
         value={query}
-        onChange={(e) => {
-          setQuery(e.target.value);
-          setShowList(true);
-        }}
-        className="w-full border border-gray-400 rounded px-4 py-2"
+        onChange={(e) => updateQuery(e.target.value)}
+        disabled={disabled}
+        className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 rounded px-4 py-2 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 dark:disabled:bg-gray-700 disabled:cursor-not-allowed"
       />
-      {showList && results.length > 0 && (
-        <ul className="absolute z-10 w-full bg-white border border-gray-300 rounded mt-1 shadow max-h-80 overflow-x-auto">
-          {results.map((player, index) => (
+      
+      {isSearching && (
+        <div className="absolute z-10 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded mt-1 shadow-lg p-2">
+          <p className="text-gray-500 dark:text-gray-400 text-sm">Aranıyor...</p>
+        </div>
+      )}
+      
+      {showResults && results.length > 0 && (
+        <ul className="absolute z-10 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded mt-1 shadow-lg max-h-80 overflow-y-auto">
+          {results.map((player) => (
             <li
-              key={index}
-              className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-              onClick={() => {
-                setQuery(player.name);
-                fetchPlayer(player.id);
-                setShowList(false);
-              }}
+              key={player.id}
+              className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-200 dark:border-gray-600 last:border-b-0 transition-colors"
+              onClick={() => handlePlayerSelect(player.id, player.name)}
             >
-              {player.name} <span className="opacity-50">{player.team}</span>
+              <div className="flex justify-between items-center">
+                <span className="font-medium text-gray-900 dark:text-gray-100">{player.name}</span>
+                <span className="text-gray-500 dark:text-gray-400 text-sm">{player.team}</span>
+              </div>
             </li>
           ))}
         </ul>
+      )}
+      
+      {showResults && results.length === 0 && query.trim() && !isSearching && (
+        <div className="absolute z-10 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded mt-1 shadow-lg p-2">
+          <p className="text-gray-500 dark:text-gray-400 text-sm">Sonuç bulunamadı</p>
+        </div>
       )}
     </div>
   );
