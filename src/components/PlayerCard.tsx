@@ -1,9 +1,10 @@
+import Image from "next/image";
 import { Player } from "@/types/player.types";
 import { formatNumber } from "@/utils/formatNumber";
 import { UI_MESSAGES } from "@/lib/constants";
 import { Card, CardContent } from "./ui/Card";
 import { Button } from "./ui/Button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface PlayerCardProps {
   player: Player;
@@ -14,6 +15,12 @@ interface PlayerCardProps {
 export default function PlayerCard({ player, currentData, onDelete }: PlayerCardProps) {
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+
+  // Player ID değiştiğinde state'leri sıfırla
+  useEffect(() => {
+    setImageError(false);
+    setImageLoaded(false);
+  }, [player.id]);
 
   const handleDelete = () => {
     if (confirm("Bu oyuncuyu silmek istediğinizden emin misiniz?")) {
@@ -64,21 +71,27 @@ export default function PlayerCard({ player, currentData, onDelete }: PlayerCard
       <div className="flex items-start gap-3 p-3">
         {/* Player Photo/Avatar */}
         <div className="flex-shrink-0 relative w-12 h-12">
-          {/* Fotoğraf deneme */}
-          {!imageError && (
-            <img
+          {/* Fotoğraf */}
+          <div className="w-12 h-12 rounded-full overflow-hidden relative">
+            <Image
+              key={player.id} // Her oyuncu için benzersiz key
               src={photoUrl}
               alt={player.name}
-              className="w-12 h-12 rounded-full object-cover object-center bg-gray-200 dark:bg-gray-700 absolute top-0 left-0"
-              onLoad={() => setImageLoaded(true)}
+              width={48}
+              height={48}
+              className={`object-cover object-center bg-gray-200 dark:bg-gray-700 transition-opacity duration-300 ${
+                imageLoaded && !imageError ? 'opacity-100' : 'opacity-0'
+              }`}
+              onLoadingComplete={() => setImageLoaded(true)}
               onError={() => setImageError(true)}
-              style={{ display: imageLoaded ? 'block' : 'none' }}
+              unoptimized
+              priority={true} // İlk yüklemede öncelik ver
             />
-          )}
+          </div>
           
           {/* Avatar fallback */}
           <div 
-            className={`w-12 h-12 rounded-full bg-gradient-to-br ${avatarColor} flex items-center justify-center shadow-lg transition-opacity duration-300 ${
+            className={`w-12 h-12 rounded-full bg-gradient-to-br ${avatarColor} flex items-center justify-center shadow-lg transition-opacity duration-300 absolute top-0 left-0 ${
               imageLoaded && !imageError ? 'opacity-0' : 'opacity-100'
             }`}
           >
