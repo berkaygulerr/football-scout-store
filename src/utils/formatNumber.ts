@@ -47,18 +47,31 @@ export function formatCurrency(amount: number, currency: string = "€"): string
  * Yaşı formatlar
  */
 export function formatAge(birthTimestamp: number): number {
-  const today = new Date();
-  const birth = new Date(birthTimestamp * 1000);
+  const now = new Date();
+  const todayUTC = new Date(Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate()
+  ));
 
-  let age = today.getUTCFullYear() - birth.getUTCFullYear();
+  const birth = new Date(birthTimestamp * 1000);
+  const birthUTC = new Date(Date.UTC(
+    birth.getUTCFullYear(),
+    birth.getUTCMonth(),
+    birth.getUTCDate()
+  ));
+
+  let age = todayUTC.getUTCFullYear() - birthUTC.getUTCFullYear();
 
   if (
-    today.getUTCMonth() < birth.getUTCMonth() ||
-    (today.getUTCMonth() === birth.getUTCMonth() && today.getUTCDate() < birth.getUTCDate())
+    todayUTC.getUTCMonth() < birthUTC.getUTCMonth() ||
+    (todayUTC.getUTCMonth() === birthUTC.getUTCMonth() &&
+     todayUTC.getUTCDate() < birthUTC.getUTCDate())
   ) {
     age--;
   }
 
   return age;
 }
+
 
