@@ -72,6 +72,7 @@ export default function PlayerCard({ player, currentData, onDelete }: PlayerCard
                 onError={() => setImageError(true)}
                 loading="lazy"
                 quality={75}
+                unoptimized={true}
               />
             </div>
           ) : (
