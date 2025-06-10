@@ -2,7 +2,10 @@
 const nextConfig = {
   images: {
     domains: ['img.sofascore.com'],
-    unoptimized: true, // Dış kaynak için optimize edilmemiş resimler
+    minimumCacheTTL: 60,
+    dangerouslyAllowSVG: true,
+    contentDispositionType: 'attachment',
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
 };
 

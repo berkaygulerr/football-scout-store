@@ -4,7 +4,7 @@ import { formatNumber } from "@/utils/formatNumber";
 import { UI_MESSAGES } from "@/lib/constants";
 import { Card, CardContent } from "./ui/Card";
 import { Button } from "./ui/Button";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 interface PlayerCardProps {
   player: Player;
@@ -14,13 +14,6 @@ interface PlayerCardProps {
 
 export default function PlayerCard({ player, currentData, onDelete }: PlayerCardProps) {
   const [imageError, setImageError] = useState(false);
-  const [imageLoaded, setImageLoaded] = useState(false);
-
-  // Player ID değiştiğinde state'leri sıfırla
-  useEffect(() => {
-    setImageError(false);
-    setImageLoaded(false);
-  }, [player.id]);
 
   const handleDelete = () => {
     if (confirm("Bu oyuncuyu silmek istediğinizden emin misiniz?")) {
@@ -62,43 +55,34 @@ export default function PlayerCard({ player, currentData, onDelete }: PlayerCard
     .slice(0, 2)
     .toUpperCase();
 
-  // SofaScore fotoğraf URL'si
-  const photoUrl = `https://img.sofascore.com/api/v1/player/${player.id}/image`;
-
   return (
     <Card className="p-0 overflow-hidden hover:shadow-md transition-shadow duration-200 min-h-[11rem] flex flex-col">
       {/* Header with Photo */}
       <div className="flex items-start gap-3 p-3">
         {/* Player Photo/Avatar */}
         <div className="flex-shrink-0 relative w-12 h-12">
-          {/* Fotoğraf */}
-          <div className="w-12 h-12 rounded-full overflow-hidden relative">
-            <Image
-              key={player.id} // Her oyuncu için benzersiz key
-              src={photoUrl}
-              alt={player.name}
-              width={48}
-              height={48}
-              className={`object-cover object-center bg-gray-200 dark:bg-gray-700 transition-opacity duration-300 ${
-                imageLoaded && !imageError ? 'opacity-100' : 'opacity-0'
-              }`}
-              onLoadingComplete={() => setImageLoaded(true)}
-              onError={() => setImageError(true)}
-              unoptimized
-              priority={true} // İlk yüklemede öncelik ver
-            />
-          </div>
-          
-          {/* Avatar fallback */}
-          <div 
-            className={`w-12 h-12 rounded-full bg-gradient-to-br ${avatarColor} flex items-center justify-center shadow-lg transition-opacity duration-300 absolute top-0 left-0 ${
-              imageLoaded && !imageError ? 'opacity-0' : 'opacity-100'
-            }`}
-          >
-            <span className="text-white font-bold text-sm">
-              {initials}
-            </span>
-          </div>
+          {!imageError ? (
+            <div className="w-12 h-12 rounded-full overflow-hidden relative">
+              <Image
+                src={`https://img.sofascore.com/api/v1/player/${player.id}/image`}
+                alt={player.name}
+                width={48}
+                height={48}
+                className="object-cover object-center"
+                onError={() => setImageError(true)}
+                loading="lazy"
+                quality={75}
+              />
+            </div>
+          ) : (
+            <div 
+              className={`w-12 h-12 rounded-full bg-gradient-to-br ${avatarColor} flex items-center justify-center shadow-lg`}
+            >
+              <span className="text-white font-bold text-sm">
+                {initials}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Player Info */}
@@ -142,7 +126,7 @@ export default function PlayerCard({ player, currentData, onDelete }: PlayerCard
               </span>
               {hasChanges && currentData.age !== player.age && (
                 <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                  Kayıtlı: {player.age}
+                  Eklenen: {player.age}
                 </div>
               )}
             </div>
@@ -158,7 +142,7 @@ export default function PlayerCard({ player, currentData, onDelete }: PlayerCard
               {hasChanges && currentData.market_value !== player.market_value && (
                 <div className="text-xs mt-1 space-y-0.5">
                   <div className="text-gray-500 dark:text-gray-400">
-                    Kayıtlı: €{formatNumber(player.market_value)}
+                    Eklenen: €{formatNumber(player.market_value)}
                   </div>
                   <div className={`font-medium ${
                     currentData.market_value > player.market_value 
@@ -167,6 +151,8 @@ export default function PlayerCard({ player, currentData, onDelete }: PlayerCard
                   }`}>
                     {currentData.market_value > player.market_value ? '+' : '-'}
                     €{formatNumber(Math.abs(currentData.market_value - player.market_value))}
+                    {' '}
+                    ({((Math.abs(currentData.market_value - player.market_value) / player.market_value) * 100).toFixed(1)}%)
                   </div>
                 </div>
               )}

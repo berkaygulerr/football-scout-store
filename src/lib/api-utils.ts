@@ -57,7 +57,7 @@ export async function apiRequest<T>(
 export const dynamicConfig = {
   dynamic: "force-dynamic" as const,
   revalidate: 0,
-};
+} as const;
 
 /**
  * Hata mesajlarını işlemek için yardımcı fonksiyon
