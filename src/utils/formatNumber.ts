@@ -50,14 +50,15 @@ export function formatAge(birthTimestamp: number): number {
   const today = new Date();
   const birth = new Date(birthTimestamp * 1000);
 
-  let age = today.getFullYear() - birth.getFullYear();
+  let age = today.getUTCFullYear() - birth.getUTCFullYear();
 
   if (
-    today.getMonth() < birth.getMonth() ||
-    (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate())
+    today.getUTCMonth() < birth.getUTCMonth() ||
+    (today.getUTCMonth() === birth.getUTCMonth() && today.getUTCDate() < birth.getUTCDate())
   ) {
     age--;
   }
 
   return age;
 }
+
