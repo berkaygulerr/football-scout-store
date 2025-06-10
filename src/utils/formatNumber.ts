@@ -15,32 +15,31 @@ export function formatNumber(num: number, options: FormatOptions = {}): string {
 
   const format = (n: number, div: number, unit: string): string => {
     const value = n / div;
-    const formatted = value % 1 === 0 
-      ? value.toString() 
-      : value.toFixed(decimals);
-    
+    const formatted =
+      value % 1 === 0 ? value.toString() : value.toFixed(decimals);
+
     return suffix ? `${formatted}${unit}` : formatted;
   };
 
   if (Math.abs(num) >= BILLION) {
-    return format(num, BILLION, 'B');
+    return format(num, BILLION, "B");
   }
-  
+
   if (Math.abs(num) >= MILLION) {
-    return format(num, MILLION, 'M');
+    return format(num, MILLION, "M");
   }
-  
+
   if (Math.abs(num) >= THOUSAND) {
-    return format(num, THOUSAND, 'K');
+    return format(num, THOUSAND, "K");
   }
-  
+
   return num.toString();
 }
 
 /**
  * Para birimini formatlar (€1M gibi)
  */
-export function formatCurrency(amount: number, currency: string = '€'): string {
+export function formatCurrency(amount: number, currency: string = "€"): string {
   return `${currency}${formatNumber(amount)}`;
 }
 
@@ -48,7 +47,17 @@ export function formatCurrency(amount: number, currency: string = '€'): string
  * Yaşı formatlar
  */
 export function formatAge(birthTimestamp: number): number {
-  return Math.floor(
-    (Date.now() - birthTimestamp * 1000) / (1000 * 60 * 60 * 24 * 365.25)
-  );
+  const today = new Date();
+  const birth = new Date(birthTimestamp * 1000);
+
+  let age = today.getFullYear() - birth.getFullYear();
+
+  if (
+    today.getMonth() < birth.getMonth() ||
+    (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate())
+  ) {
+    age--;
+  }
+
+  return age;
 }
