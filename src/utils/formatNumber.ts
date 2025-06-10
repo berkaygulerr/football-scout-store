@@ -46,7 +46,7 @@ export function formatCurrency(amount: number, currency: string = "€"): string
 /**
  * Yaşı formatlar
  */
-export function formatAgeByTurkishDate(birthTimestamp: number): number {
+export function formatAge(birthTimestamp: number): number {
   const timeZone = "Europe/Istanbul";
 
   const birthDate = new Date(birthTimestamp * 1000);
