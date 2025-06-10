@@ -48,30 +48,16 @@ export function formatCurrency(amount: number, currency: string = "€"): string
  */
 export function formatAge(birthTimestamp: number): number {
   const now = new Date();
-  const todayUTC = new Date(Date.UTC(
-    now.getUTCFullYear(),
-    now.getUTCMonth(),
-    now.getUTCDate()
-  ));
+  const birth = new Date(birthTimestamp * 1000); // Bu da local Date olur
 
-  const birth = new Date(birthTimestamp * 1000);
-  const birthUTC = new Date(Date.UTC(
-    birth.getUTCFullYear(),
-    birth.getUTCMonth(),
-    birth.getUTCDate()
-  ));
-
-  let age = todayUTC.getUTCFullYear() - birthUTC.getUTCFullYear();
+  let age = now.getFullYear() - birth.getFullYear();
 
   if (
-    todayUTC.getUTCMonth() < birthUTC.getUTCMonth() ||
-    (todayUTC.getUTCMonth() === birthUTC.getUTCMonth() &&
-     todayUTC.getUTCDate() < birthUTC.getUTCDate())
+    now.getMonth() < birth.getMonth() ||
+    (now.getMonth() === birth.getMonth() && now.getDate() < birth.getDate())
   ) {
     age--;
   }
 
   return age;
 }
-
-
