@@ -46,15 +46,38 @@ export function formatCurrency(amount: number, currency: string = "€"): string
 /**
  * Yaşı formatlar
  */
-export function formatAge(birthTimestamp: number): number {
-  const now = new Date();
-  const birth = new Date(birthTimestamp * 1000); // Bu da local Date olur
+export function formatAgeByTurkishDate(birthTimestamp: number): number {
+  const timeZone = "Europe/Istanbul";
 
-  let age = now.getFullYear() - birth.getFullYear();
+  const birthDate = new Date(birthTimestamp * 1000);
+  const birth = new Intl.DateTimeFormat("tr-TR", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(birthDate);
+
+  const now = new Date();
+  const today = new Intl.DateTimeFormat("tr-TR", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+
+  const birthYear = Number(birth.find(p => p.type === "year")?.value);
+  const birthMonth = Number(birth.find(p => p.type === "month")?.value);
+  const birthDay = Number(birth.find(p => p.type === "day")?.value);
+
+  const todayYear = Number(today.find(p => p.type === "year")?.value);
+  const todayMonth = Number(today.find(p => p.type === "month")?.value);
+  const todayDay = Number(today.find(p => p.type === "day")?.value);
+
+  let age = todayYear - birthYear;
 
   if (
-    now.getMonth() < birth.getMonth() ||
-    (now.getMonth() === birth.getMonth() && now.getDate() < birth.getDate())
+    todayMonth < birthMonth ||
+    (todayMonth === birthMonth && todayDay < birthDay)
   ) {
     age--;
   }
