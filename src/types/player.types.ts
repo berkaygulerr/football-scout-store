@@ -39,13 +39,11 @@ export const playerSchema = z.object({
   id: z.number(),
   name: z.string()
     .min(2, "İsim en az 2 karakter olmalıdır")
-    .max(100, "İsim en fazla 100 karakter olabilir")
-    .regex(/^[a-zA-ZğüşıöçĞÜŞİÖÇ0-9\s-]+$/, "İsim geçersiz karakterler içeriyor"),
+    .max(100, "İsim en fazla 100 karakter olabilir"),
   
   team: z.string()
     .min(2, "Takım adı en az 2 karakter olmalıdır")
-    .max(100, "Takım adı en fazla 100 karakter olabilir")
-    .regex(/^[a-zA-ZğüşıöçĞÜŞİÖÇ0-9\s-]+$/, "Takım adı geçersiz karakterler içeriyor"),
+    .max(100, "Takım adı en fazla 100 karakter olabilir"),
   
   age: z.number()
     .min(API_CONFIG.MIN_AGE, `Yaş en az ${API_CONFIG.MIN_AGE} olmalıdır`)
