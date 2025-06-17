@@ -24,6 +24,7 @@ export default function Home() {
     updateFilter,
     resetFilters,
     uniqueTeams,
+    teamsWithCount,
     totalFilteredCount,
     totalCount,
   } = useFilters(players);
@@ -128,6 +129,7 @@ export default function Home() {
             updateFilter={updateFilter}
             resetFilters={resetFilters}
             uniqueTeams={uniqueTeams}
+            teamsWithCount={teamsWithCount}
             totalCount={totalCount}
             filteredCount={totalFilteredCount}
             onPlayerAdded={loadPlayers}

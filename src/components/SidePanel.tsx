@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { FilterOptions } from "@/hooks/useFilters";
+import { FilterOptions, TeamWithCount } from "@/hooks/useFilters";
 import AddPlayerForm from "@/components/AddPlayerForm";
 import PlayerFilters from "@/components/PlayerFilters";
 import { Button } from "@/components/ui/Button";
@@ -10,6 +10,7 @@ interface SidePanelProps {
   updateFilter: <K extends keyof FilterOptions>(key: K, value: FilterOptions[K]) => void;
   resetFilters: () => void;
   uniqueTeams: string[];
+  teamsWithCount: TeamWithCount[];
   totalCount: number;
   filteredCount: number;
   onPlayerAdded: () => void;
@@ -20,6 +21,7 @@ export default function SidePanel({
   updateFilter,
   resetFilters,
   uniqueTeams,
+  teamsWithCount,
   totalCount,
   filteredCount,
   onPlayerAdded,
@@ -89,6 +91,7 @@ export default function SidePanel({
             updateFilter={updateFilter}
             resetFilters={resetFilters}
             uniqueTeams={uniqueTeams}
+            teamsWithCount={teamsWithCount}
             totalCount={totalCount}
             filteredCount={filteredCount}
           />
@@ -103,6 +106,7 @@ export default function SidePanel({
           updateFilter={updateFilter}
           resetFilters={resetFilters}
           uniqueTeams={uniqueTeams}
+          teamsWithCount={teamsWithCount}
           totalCount={totalCount}
           filteredCount={filteredCount}
         />

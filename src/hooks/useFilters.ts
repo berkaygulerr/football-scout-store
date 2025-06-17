@@ -10,6 +10,11 @@ export interface FilterOptions {
   sortOrder: 'asc' | 'desc';
 }
 
+export interface TeamWithCount {
+  name: string;
+  count: number;
+}
+
 const defaultFilters: FilterOptions = {
   searchQuery: '',
   teamFilter: '',
@@ -103,10 +108,32 @@ export function useFilters(players: Player[]) {
     setFilters(defaultFilters);
   };
 
-  const uniqueTeams = useMemo(() => {
-    const teams = new Set(players.map(p => p.team));
-    return Array.from(teams).sort();
+  const teamsWithCount = useMemo(() => {
+    // Takımları ve her takımdaki oyuncu sayısını hesapla
+    const teamCounts: Record<string, number> = {};
+    
+    players.forEach(player => {
+      if (teamCounts[player.team]) {
+        teamCounts[player.team]++;
+      } else {
+        teamCounts[player.team] = 1;
+      }
+    });
+    
+    // Takım adlarını ve sayılarını içeren dizi oluştur
+    const result: TeamWithCount[] = Object.entries(teamCounts).map(([name, count]) => ({
+      name,
+      count
+    }));
+    
+    // Takım adına göre alfabetik sırala
+    return result.sort((a, b) => a.name.localeCompare(b.name));
   }, [players]);
+
+  // Eski uniqueTeams'i koruyalım uyumluluk için
+  const uniqueTeams = useMemo(() => {
+    return teamsWithCount.map(team => team.name);
+  }, [teamsWithCount]);
 
   return {
     filters,
@@ -114,6 +141,7 @@ export function useFilters(players: Player[]) {
     updateFilter,
     resetFilters,
     uniqueTeams,
+    teamsWithCount,
     totalFilteredCount: filteredAndSortedPlayers.length,
     totalCount: players.length,
   };
