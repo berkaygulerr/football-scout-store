@@ -42,8 +42,8 @@ export default function SidePanel({
                 Oyuncu Ekle
               </Button>
             </SheetTrigger>
-            <SheetContent side="bottom" className="h-[90vh] flat-card">
-              <SheetHeader>
+            <SheetContent side="bottom" className="h-[90vh] flat-card overflow-y-auto">
+              <SheetHeader className="pb-4">
                 <SheetTitle className="flex items-center gap-2">
                   <UserPlus className="h-5 w-5" />
                   Oyuncu Ekle
@@ -52,7 +52,7 @@ export default function SidePanel({
                   Sisteme yeni oyuncu ekleyin
                 </SheetDescription>
               </SheetHeader>
-              <div className="mt-6">
+              <div className="flex-1 overflow-y-auto pb-6">
                 <AddPlayerForm onPlayerAdded={onPlayerAdded} />
               </div>
             </SheetContent>
@@ -69,8 +69,8 @@ export default function SidePanel({
                 </Badge>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-full sm:w-[400px] flat-card">
-              <SheetHeader>
+            <SheetContent side="right" className="w-full sm:w-[400px] flat-card overflow-y-auto">
+              <SheetHeader className="pb-4">
                 <SheetTitle className="flex items-center gap-2">
                   <Filter className="h-5 w-5" />
                   Filtreler
@@ -79,7 +79,7 @@ export default function SidePanel({
                   Oyuncuları filtreleyin ve sıralayın
                 </SheetDescription>
               </SheetHeader>
-              <div className="mt-6">
+              <div className="flex-1 overflow-y-auto pb-6">
                 <PlayerFilters
                   filters={filters}
                   updateFilter={updateFilter}
