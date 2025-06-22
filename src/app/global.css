@@ -2,58 +2,125 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Dual Range Slider Styles */
-.slider-thumb-blue::-webkit-slider-thumb {
-  appearance: none;
-  height: 16px;
-  width: 16px;
-  border-radius: 50%;
-  background: #3b82f6;
-  cursor: pointer;
-  border: 2px solid #ffffff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+@layer base {
+  :root {
+    --background: 48 20% 96%;
+    --foreground: 20 14% 4%;
+    --card: 0 0% 100%;
+    --card-foreground: 20 14% 4%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 14% 4%;
+    --primary: 45 93% 47%;
+    --primary-foreground: 20 14% 4%;
+    --secondary: 48 10% 90%;
+    --secondary-foreground: 20 14% 4%;
+    --muted: 48 10% 92%;
+    --muted-foreground: 45 20% 35%;
+    --accent: 48 10% 90%;
+    --accent-foreground: 20 14% 4%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 48 10% 85%;
+    --input: 48 10% 92%;
+    --ring: 45 93% 47%;
+    --chart-1: 45 93% 47%;
+    --chart-2: 45 20% 35%;
+    --chart-3: 27 96% 61%;
+    --chart-4: 43 74% 49%;
+    --chart-5: 17 88% 40%;
+    --radius: 0.25rem;
+    
+    --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+    --font-heading: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+  }
+  .dark {
+    --background: 20 14% 4%;
+    --foreground: 48 96% 89%;
+    --card: 24 10% 8%;
+    --card-foreground: 48 96% 89%;
+    --popover: 24 10% 8%;
+    --popover-foreground: 48 96% 89%;
+    --primary: 45 93% 47%;
+    --primary-foreground: 20 14% 4%;
+    --secondary: 24 6% 12%;
+    --secondary-foreground: 48 96% 89%;
+    --muted: 25 6% 14%;
+    --muted-foreground: 48 20% 65%;
+    --accent: 24 6% 12%;
+    --accent-foreground: 48 96% 89%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 25 6% 16%;
+    --input: 25 6% 16%;
+    --ring: 45 93% 47%;
+    --chart-1: 45 93% 47%;
+    --chart-2: 48 20% 65%;
+    --chart-3: 27 96% 61%;
+    --chart-4: 43 74% 49%;
+    --chart-5: 17 88% 40%
+  }
 }
 
-.slider-thumb-green::-webkit-slider-thumb {
-  appearance: none;
-  height: 16px;
-  width: 16px;
-  border-radius: 50%;
-  background: #10b981;
-  cursor: pointer;
-  border: 2px solid #ffffff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.slider-thumb-blue::-moz-range-thumb {
-  height: 16px;
-  width: 16px;
-  border-radius: 50%;
-  background: #3b82f6;
-  cursor: pointer;
-  border: 2px solid #ffffff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.slider-thumb-green::-moz-range-thumb {
-  height: 16px;
-  width: 16px;
-  border-radius: 50%;
-  background: #10b981;
-  cursor: pointer;
-  border: 2px solid #ffffff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-/* Dark mode adjustments */
-@media (prefers-color-scheme: dark) {
-  .slider-thumb-blue::-webkit-slider-thumb,
-  .slider-thumb-green::-webkit-slider-thumb {
-    border-color: #374151;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
   }
   
-  .slider-thumb-blue::-moz-range-thumb,
-  .slider-thumb-green::-moz-range-thumb {
-    border-color: #374151;
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+  }
+}
+
+/* Ek animasyonlar ve smooth geçişler */
+@layer components {
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+  
+  .flat-card {
+    @apply bg-card border-0 shadow-none;
+  }
+  
+  .flat-input {
+    @apply border-0 shadow-none bg-input;
+  }
+  
+  .flat-button {
+    @apply shadow-none border-0;
+  }
+  
+  .font-heading {
+    font-family: var(--font-heading);
+  }
+  
+  .font-body {
+    font-family: var(--font-sans);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

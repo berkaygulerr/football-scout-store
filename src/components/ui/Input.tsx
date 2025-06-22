@@ -1,47 +1,22 @@
-import { InputHTMLAttributes, forwardRef } from 'react';
-import { cn } from '@/utils/cn';
+import * as React from "react"
 
-interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'className'> {
-  label?: string;
-  error?: string;
-  icon?: React.ReactNode;
-  className?: string;
-}
+import { cn } from "@/lib/utils"
 
-const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className = '', label, error, icon, ...props }, ref) => {
+const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
+  ({ className, type, ...props }, ref) => {
     return (
-      <div className="space-y-1">
-        {label && (
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            {label}
-          </label>
+      <input
+        type={type}
+        className={cn(
+          "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+          className
         )}
-        <div className="relative">
-          {icon && (
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <div className="h-5 w-5 text-gray-400">{icon}</div>
-            </div>
-          )}
-          <input
-            ref={ref}
-            className={cn(
-              "block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 shadow-sm transition-all duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900",
-              icon ? "pl-10" : "",
-              error ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "",
-              className
-            )}
-            {...props}
-          />
-        </div>
-        {error && (
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-        )}
-      </div>
-    );
+        ref={ref}
+        {...props}
+      />
+    )
   }
-);
+)
+Input.displayName = "Input"
 
-Input.displayName = "Input";
-
-export { Input, type InputProps }; 
+export { Input }

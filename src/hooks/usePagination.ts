@@ -18,7 +18,6 @@ export function usePagination<T>(
     return items.length === 0 ? 1 : Math.ceil(items.length / pagination.pageSize);
   }, [items.length, pagination.pageSize]);
 
-  // Auto-correct current page if it's out of range
   useEffect(() => {
     if (items.length > 0 && pagination.page > totalPages && totalPages > 0) {
       setPagination(prev => ({ ...prev, page: totalPages }));
@@ -30,9 +29,7 @@ export function usePagination<T>(
     
     const startIndex = (pagination.page - 1) * pagination.pageSize;
     const endIndex = startIndex + pagination.pageSize;
-    const result = items.slice(startIndex, endIndex);
-    
-    return result;
+    return items.slice(startIndex, endIndex);
   }, [items, pagination]);
 
   const hasNextPage = pagination.page < totalPages && items.length > 0;
@@ -60,11 +57,10 @@ export function usePagination<T>(
     setPagination(prev => ({ 
       ...prev, 
       pageSize, 
-      page: 1 // Reset to first page when changing page size
+      page: 1
     }));
   };
 
-  // Reset to first page when items change (e.g., after filtering)
   const resetPage = () => {
     setPagination(prev => ({ ...prev, page: 1 }));
   };
@@ -72,7 +68,7 @@ export function usePagination<T>(
   const getPageNumbers = () => {
     if (totalPages <= 1) return [1];
     
-    const delta = 2; // Number of pages to show on each side
+    const delta = 2;
     const pages: number[] = [];
     const rangeStart = Math.max(1, pagination.page - delta);
     const rangeEnd = Math.min(totalPages, pagination.page + delta);
@@ -84,7 +80,6 @@ export function usePagination<T>(
     return pages;
   };
 
-  // Calculate start and end indices
   const startIndex = items.length === 0 ? 0 : (pagination.page - 1) * pagination.pageSize + 1;
   const endIndex = items.length === 0 ? 0 : Math.min(pagination.page * pagination.pageSize, items.length);
 

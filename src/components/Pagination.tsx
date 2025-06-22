@@ -1,4 +1,15 @@
-import { Button } from './ui/Button';
+import { 
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "./ui/pagination";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { Label } from "./ui/label";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface PaginationProps {
   currentPage: number;
@@ -16,7 +27,7 @@ interface PaginationProps {
   getPageNumbers: () => number[];
 }
 
-export default function Pagination({
+export default function PaginationComponent({
   currentPage,
   totalPages,
   pageSize,
@@ -36,114 +47,152 @@ export default function Pagination({
   const pageNumbers = getPageNumbers();
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-6 border-t border-gray-200 dark:border-gray-700">
-      {/* Items info */}
-      <div className="text-sm text-gray-600 dark:text-gray-400">
-        {totalItems > 0 ? (
-          <>
-            <span className="font-medium">{startIndex}-{endIndex}</span> / <span className="font-medium">{totalItems}</span> oyuncu
-          </>
-        ) : (
-          <span>Oyuncu bulunamadı</span>
-        )}
+    <div className="space-y-4">
+      {/* Mobil: Sadece sayfa bilgisi ve sayfa boyutu */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-muted-foreground">
+        <div className="order-2 sm:order-1">
+          <span className="hidden sm:inline">
+            {startIndex + 1}-{Math.min(endIndex, totalItems)} / {totalItems} sonuç
+          </span>
+          <span className="sm:hidden">
+            {totalItems} sonuç
+          </span>
+        </div>
+        
+        <div className="flex items-center gap-2 order-1 sm:order-2">
+          <Label htmlFor="pageSize" className="text-xs sm:text-sm whitespace-nowrap">
+            <span className="hidden sm:inline">Sayfa başına:</span>
+            <span className="sm:hidden">Sayfa:</span>
+          </Label>
+          <Select value={pageSize.toString()} onValueChange={(value) => setPageSize(Number(value))}>
+            <SelectTrigger id="pageSize" className="w-16 sm:w-20 flat-input text-xs sm:text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="flat-card">
+              <SelectItem value="12">12</SelectItem>
+              <SelectItem value="24">24</SelectItem>
+              <SelectItem value="48">48</SelectItem>
+              <SelectItem value="96">96</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
-      {/* Page size selector */}
-      <div className="flex items-center gap-2">
-        <label className="text-sm text-gray-600 dark:text-gray-400">
-          Sayfa başına:
-        </label>
-        <select
-          value={pageSize}
-          onChange={(e) => setPageSize(Number(e.target.value))}
-          className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-1 text-sm text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-        >
-          <option value={6}>6</option>
-          <option value={12}>12</option>
-          <option value={24}>24</option>
-          <option value={48}>48</option>
-        </select>
+      {/* Navigation - Mobil optimized */}
+      <div className="flex items-center justify-center">
+        <Pagination>
+          <PaginationContent className="gap-1">
+            <PaginationItem>
+              <PaginationPrevious 
+                onClick={prevPage}
+                className={`flat-button h-8 px-2 sm:h-9 sm:px-3 ${!hasPrevPage ? "pointer-events-none opacity-50" : "cursor-pointer"}`}
+              >
+                <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline ml-1">Önceki</span>
+              </PaginationPrevious>
+            </PaginationItem>
+
+            {/* Mobilde daha az sayfa göster */}
+            <div className="hidden sm:flex items-center gap-1">
+              {pageNumbers[0] > 1 && (
+                <>
+                  <PaginationItem>
+                    <PaginationLink 
+                      onClick={() => goToPage(1)}
+                      className="cursor-pointer flat-button"
+                    >
+                      1
+                    </PaginationLink>
+                  </PaginationItem>
+                  {pageNumbers[0] > 2 && (
+                    <PaginationItem>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  )}
+                </>
+              )}
+
+              {pageNumbers.map((page) => (
+                <PaginationItem key={page}>
+                  <PaginationLink
+                    onClick={() => goToPage(page)}
+                    isActive={currentPage === page}
+                    className="cursor-pointer flat-button"
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+
+              {pageNumbers.length > 0 && pageNumbers[pageNumbers.length - 1] < totalPages && (
+                <>
+                  {pageNumbers[pageNumbers.length - 1] < totalPages - 1 && (
+                    <PaginationItem>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  )}
+                  <PaginationItem>
+                    <PaginationLink 
+                      onClick={() => goToPage(totalPages)}
+                      className="cursor-pointer flat-button"
+                    >
+                      {totalPages}
+                    </PaginationLink>
+                  </PaginationItem>
+                </>
+              )}
+            </div>
+
+            {/* Mobil: Sadece mevcut sayfa */}
+            <div className="flex sm:hidden items-center gap-1">
+              {currentPage > 1 && (
+                <PaginationItem>
+                  <PaginationLink
+                    onClick={() => goToPage(currentPage - 1)}
+                    className="cursor-pointer flat-button h-8 w-8 text-xs"
+                  >
+                    {currentPage - 1}
+                  </PaginationLink>
+                </PaginationItem>
+              )}
+              
+              <PaginationItem>
+                <PaginationLink
+                  isActive={true}
+                  className="flat-button h-8 w-8 text-xs"
+                >
+                  {currentPage}
+                </PaginationLink>
+              </PaginationItem>
+
+              {currentPage < totalPages && (
+                <PaginationItem>
+                  <PaginationLink
+                    onClick={() => goToPage(currentPage + 1)}
+                    className="cursor-pointer flat-button h-8 w-8 text-xs"
+                  >
+                    {currentPage + 1}
+                  </PaginationLink>
+                </PaginationItem>
+              )}
+            </div>
+
+            <PaginationItem>
+              <PaginationNext 
+                onClick={nextPage}
+                className={`flat-button h-8 px-2 sm:h-9 sm:px-3 ${!hasNextPage ? "pointer-events-none opacity-50" : "cursor-pointer"}`}
+              >
+                <span className="hidden sm:inline mr-1">Sonraki</span>
+                <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
+              </PaginationNext>
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
       </div>
 
-      {/* Navigation */}
-      <div className="flex items-center gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={prevPage}
-          disabled={!hasPrevPage}
-          className="px-3"
-          aria-label="Önceki sayfa"
-        >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-        </Button>
-
-        {/* Page numbers */}
-        <div className="hidden sm:flex items-center gap-1">
-          {pageNumbers[0] > 1 && (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => goToPage(1)}
-                className="px-3"
-              >
-                1
-              </Button>
-              {pageNumbers[0] > 2 && (
-                <span className="px-2 text-gray-400">...</span>
-              )}
-            </>
-          )}
-
-          {pageNumbers.map((page) => (
-            <Button
-              key={page}
-              variant={currentPage === page ? "primary" : "outline"}
-              size="sm"
-              onClick={() => goToPage(page)}
-              className="px-3"
-            >
-              {page}
-            </Button>
-          ))}
-
-          {pageNumbers.length > 0 && pageNumbers[pageNumbers.length - 1] < totalPages && (
-            <>
-              {pageNumbers[pageNumbers.length - 1] < totalPages - 1 && (
-                <span className="px-2 text-gray-400">...</span>
-              )}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => goToPage(totalPages)}
-                className="px-3"
-              >
-                {totalPages}
-              </Button>
-            </>
-          )}
-        </div>
-
-        {/* Mobile page info */}
-        <div className="sm:hidden text-sm text-gray-600 dark:text-gray-400 px-3">
-          {currentPage} / {totalPages}
-        </div>
-
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={nextPage}
-          disabled={!hasNextPage}
-          className="px-3"
-          aria-label="Sonraki sayfa"
-        >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </Button>
+      {/* Mobil: Sayfa bilgisi alt kısımda */}
+      <div className="sm:hidden text-center text-xs text-muted-foreground">
+        Sayfa {currentPage} / {totalPages}
       </div>
     </div>
   );

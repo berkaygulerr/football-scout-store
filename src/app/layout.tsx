@@ -1,6 +1,20 @@
 import type { Metadata } from 'next';
+import { Inter, Poppins } from 'next/font/google';
 import "./global.css"
-import { ThemeProvider } from '@/contexts/ThemeContext';
+import { ThemeProvider } from '@/contexts/theme-provider';
+
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter',
+});
+
+const poppins = Poppins({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  display: 'swap',
+  variable: '--font-poppins',
+});
 
 export const metadata: Metadata = {
   title: 'Oyuncu Yönetimi',
@@ -16,12 +30,15 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="tr" suppressHydrationWarning>
-      <body className="bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors">
-        <ThemeProvider>
-          <main className="min-h-screen">
-            {children}
-          </main>
+    <html lang="tr" suppressHydrationWarning className={`${inter.variable} ${poppins.variable}`}>
+      <body className={inter.className}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
         </ThemeProvider>
       </body>
     </html>

@@ -2,13 +2,14 @@
 import { Player } from "@/types/player.types";
 import PlayerCard from "@/components/PlayerCard";
 import Pagination from "@/components/Pagination";
+import { Card, CardContent } from "@/components/ui/card";
+import { Loader2, Search } from "lucide-react";
 
 interface PlayerListProps {
   isLoading: boolean;
   paginatedItems: Player[];
   currentPlayersData: Record<string, Player>;
   onDelete: (id: number) => void;
-  // Pagination props
   currentPage: number;
   totalPages: number;
   pageSize: number;
@@ -29,7 +30,6 @@ export default function PlayerList({
   paginatedItems,
   currentPlayersData,
   onDelete,
-  // Pagination props
   currentPage,
   totalPages,
   pageSize,
@@ -47,8 +47,8 @@ export default function PlayerList({
   if (isLoading) {
     return (
       <div className="text-center py-12">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <p className="mt-4 text-gray-600 dark:text-gray-400">Oyuncular yükleniyor...</p>
+        <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+        <p className="mt-4 text-muted-foreground">Oyuncular yükleniyor...</p>
       </div>
     );
   }
@@ -56,17 +56,17 @@ export default function PlayerList({
   if (paginatedItems.length === 0) {
     return (
       <div className="text-center py-16">
-        <div className="max-w-md mx-auto">
-          <svg className="h-12 w-12 text-gray-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-            Sonuç bulunamadı
-          </h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
-            Filtreleri değiştirerek farklı sonuçlar deneyebilirsiniz.
-          </p>
-        </div>
+        <Card className="max-w-md mx-auto flat-card">
+          <CardContent className="p-8">
+            <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium mb-2">
+              Sonuç bulunamadı
+            </h3>
+            <p className="text-muted-foreground text-sm">
+              Filtreleri değiştirerek farklı sonuçlar deneyebilirsiniz.
+            </p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -85,7 +85,6 @@ export default function PlayerList({
         ))}
       </div>
 
-      {/* Pagination */}
       <div className="mt-8">
         <Pagination
           currentPage={currentPage}
