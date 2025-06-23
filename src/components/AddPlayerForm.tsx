@@ -1,79 +1,113 @@
+"use client";
+
 import { useState } from "react";
+import { useStore } from "@/store/useStore";
+import { Button } from "./ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Label } from "./ui/label";
+import { Alert, AlertDescription } from "./ui/alert";
+import { UserPlus, Plus, AlertCircle } from "lucide-react";
 import { Player } from "@/types/player.types";
 import { PlayerService } from "@/services/player.service";
-import { formatNumber } from "@/utils/formatNumber";
 import PlayerInput from "./PlayerInput";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { Badge } from "./ui/badge";
-import { UserPlus } from "lucide-react";
 
 interface AddPlayerFormProps {
-  onPlayerAdded: () => void;
+  onPlayerAdded?: () => void;
 }
 
-const INITIAL_PLAYER: Player = {
-  id: 0,
-  name: "",
-  team: "",
-  age: 0,
-  market_value: 0,
-};
-
 export default function AddPlayerForm({ onPlayerAdded }: AddPlayerFormProps) {
-  const [selectedPlayer, setSelectedPlayer] = useState<Player>(INITIAL_PLAYER);
+  const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null);
+  const [selectedPlayerData, setSelectedPlayerData] = useState<Player | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string>("");
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const { addPlayer, error } = useStore();
+
+  const handlePlayerSelect = async (playerId: number) => {
+    try {
+      const player = await PlayerService.getPlayerById(playerId);
+      setSelectedPlayerId(playerId);
+      setSelectedPlayerData(player);
+      setFormError("");
+    } catch (error) {
+      setFormError("Oyuncu detayları alınamadı");
+    }
+  };
+
+  const resetForm = () => {
+    setSelectedPlayerId(null);
+    setSelectedPlayerData(null);
+    setFormError("");
+  };
+
+  const validateForm = (): string | null => {
+    if (!selectedPlayerId) {
+      return "Lütfen bir oyuncu seçin";
+    }
+    return null;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!selectedPlayer.id) {
-      alert("Lütfen bir oyuncu seçin");
+    
+    const validationError = validateForm();
+    if (validationError) {
+      setFormError(validationError);
       return;
     }
 
+    if (!selectedPlayerData) {
+      setFormError("Oyuncu bilgileri eksik");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setFormError("");
+
     try {
-      setIsSubmitting(true);
-      await PlayerService.createPlayer(selectedPlayer);
-      setSelectedPlayer(INITIAL_PLAYER);
-      onPlayerAdded();
-    } catch (error) {
-      console.error("Oyuncu eklenirken hata:", error);
-      alert("Oyuncu eklenirken bir hata oluştu");
+      const playerData: Player = {
+        id: selectedPlayerData.id,
+        name: selectedPlayerData.name,
+        team: selectedPlayerData.team,
+        age: selectedPlayerData.age,
+        market_value: selectedPlayerData.market_value,
+        player_id: selectedPlayerData.player_id,
+      };
+
+      await addPlayer(playerData);
+      resetForm();
+      onPlayerAdded?.();
+    } catch (err) {
+      // Error is handled by store
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handlePlayerSelect = async (playerId: number) => {
-    try {
-      const player = await PlayerService.getPlayerById(playerId);
-      setSelectedPlayer(player);
-    } catch (error) {
-      console.error("Oyuncu detayları alınırken hata:", error);
-      alert("Oyuncu detayları alınamadı");
-    }
-  };
-
-  const resetForm = () => {
-    setSelectedPlayer(INITIAL_PLAYER);
-  };
+  const displayError = formError || error;
 
   return (
     <Card className="flat-card">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-lg flex items-center gap-2">
           <UserPlus className="h-5 w-5" />
-          Oyuncu Ekle
+          Oyuncu Ara ve Ekle
         </CardTitle>
       </CardHeader>
       
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
+        {displayError && (
+          <Alert className="mb-4 flat-card border-destructive/20 bg-destructive/5">
+            <AlertCircle className="h-4 w-4 text-destructive" />
+            <AlertDescription className="text-destructive">
+              {displayError}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="player-search">
+            <Label className="text-sm font-medium">
               Oyuncu Ara
             </Label>
             <PlayerInput
@@ -81,71 +115,66 @@ export default function AddPlayerForm({ onPlayerAdded }: AddPlayerFormProps) {
               disabled={isSubmitting}
               className="w-full"
             />
+            <p className="text-xs text-muted-foreground">
+              Oyuncu adı yazarak arama yapabilirsiniz
+            </p>
           </div>
 
-          {selectedPlayer.id > 0 && (
-            <div className="space-y-4 p-4 bg-muted rounded">
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex-1 space-y-2">
-                  <Label>İsim</Label>
-                  <Input
-                    value={selectedPlayer.name}
-                    disabled
-                    className="flat-input"
-                  />
+          {selectedPlayerData && (
+            <div className="space-y-3 p-4 bg-muted/30 rounded-lg border border-dashed border-muted-foreground/20">
+              <p className="text-sm font-medium text-foreground">
+                Seçilen Oyuncu:
+              </p>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-muted-foreground">İsim:</span>
+                  <div className="font-medium">{selectedPlayerData.name}</div>
                 </div>
-                <div className="flex-1 space-y-2">
-                  <Label>Takım</Label>
-                  <div className="flex items-center h-9 px-3 rounded bg-input">
-                    <Badge variant="secondary" className="flat-button">
-                      {selectedPlayer.team}
-                    </Badge>
-                  </div>
+                <div>
+                  <span className="text-muted-foreground">Takım:</span>
+                  <div className="font-medium">{selectedPlayerData.team}</div>
                 </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex-1 space-y-2">
-                  <Label>Yaş</Label>
-                  <Input
-                    value={selectedPlayer.age}
-                    disabled
-                    className="flat-input"
-                  />
+                <div>
+                  <span className="text-muted-foreground">Yaş:</span>
+                  <div className="font-medium">{selectedPlayerData.age}</div>
                 </div>
-                <div className="flex-1 space-y-2">
-                  <Label>Market Değeri</Label>
-                  <Input
-                    value={`€${formatNumber(selectedPlayer.market_value)}`}
-                    disabled
-                    className="flat-input font-semibold"
-                  />
+                <div>
+                  <span className="text-muted-foreground">Market Değeri:</span>
+                  <div className="font-medium">€{(selectedPlayerData.market_value / 1000000).toFixed(1)}M</div>
                 </div>
               </div>
             </div>
           )}
 
-          <div className="flex gap-2">
-            <Button
-              type="submit"
-              disabled={!selectedPlayer.id || isSubmitting}
-              className="flex-1 flat-button"
-            >
-              {isSubmitting ? 'Ekleniyor...' : 'Oyuncuyu Ekle'}
-            </Button>
-            
-            {selectedPlayer.id > 0 && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={resetForm}
-                disabled={isSubmitting}
-                className="flat-button"
-              >
-                Temizle
-              </Button>
+          <Button
+            type="submit"
+            disabled={isSubmitting || !selectedPlayerId}
+            className="w-full flat-button"
+          >
+            {isSubmitting ? (
+              <div className="flex items-center gap-2">
+                <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                Ekleniyor...
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Oyuncu Ekle
+              </div>
             )}
-          </div>
+          </Button>
+
+          {selectedPlayerData && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={resetForm}
+              disabled={isSubmitting}
+              className="w-full flat-button"
+            >
+              Temizle
+            </Button>
+          )}
         </form>
       </CardContent>
     </Card>

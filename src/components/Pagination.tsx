@@ -1,3 +1,4 @@
+import { useStore } from "@/store/useStore";
 import { 
   Pagination,
   PaginationContent,
@@ -11,40 +12,65 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Label } from "./ui/label";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-interface PaginationProps {
-  currentPage: number;
-  totalPages: number;
-  pageSize: number;
-  totalItems: number;
-  startIndex: number;
-  endIndex: number;
-  hasNextPage: boolean;
-  hasPrevPage: boolean;
-  goToPage: (page: number) => void;
-  nextPage: () => void;
-  prevPage: () => void;
-  setPageSize: (size: number) => void;
-  getPageNumbers: () => number[];
-}
+export default function PaginationComponent() {
+  // Zustand store - çok basit!
+  const {
+    currentPage,
+    pageSize,
+    setCurrentPage,
+    setPageSize,
+    getFilteredPlayers,
+    getTotalPages,
+  } = useStore();
 
-export default function PaginationComponent({
-  currentPage,
-  totalPages,
-  pageSize,
-  totalItems,
-  startIndex,
-  endIndex,
-  hasNextPage,
-  hasPrevPage,
-  goToPage,
-  nextPage,
-  prevPage,
-  setPageSize,
-  getPageNumbers,
-}: PaginationProps) {
+  const filteredPlayers = getFilteredPlayers();
+  const totalPages = getTotalPages();
+  const totalItems = filteredPlayers.length;
+
   if (totalItems === 0) return null;
 
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, totalItems);
+  const hasNextPage = currentPage < totalPages;
+  const hasPrevPage = currentPage > 1;
+
+  // Sayfa numaraları hesapla
+  const getPageNumbers = () => {
+    const delta = 2;
+    const range = [];
+    
+    for (let i = Math.max(2, currentPage - delta); 
+         i <= Math.min(totalPages - 1, currentPage + delta); 
+         i++) {
+      range.push(i);
+    }
+    
+    return range.filter((page, index, arr) => 
+      page !== arr[index - 1]
+    );
+  };
+
   const pageNumbers = getPageNumbers();
+
+  const handleNextPage = () => {
+    if (hasNextPage) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (hasPrevPage) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleGoToPage = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleSetPageSize = (size: number) => {
+    setPageSize(size);
+  };
 
   return (
     <div className="space-y-4">
@@ -52,7 +78,7 @@ export default function PaginationComponent({
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-muted-foreground">
         <div className="order-2 sm:order-1">
           <span className="hidden sm:inline">
-            {startIndex + 1}-{Math.min(endIndex, totalItems)} / {totalItems} sonuç
+            {startIndex + 1}-{endIndex} / {totalItems} sonuç
           </span>
           <span className="sm:hidden">
             {totalItems} sonuç
@@ -64,7 +90,7 @@ export default function PaginationComponent({
             <span className="hidden sm:inline">Sayfa başına:</span>
             <span className="sm:hidden">Sayfa:</span>
           </Label>
-          <Select value={pageSize.toString()} onValueChange={(value) => setPageSize(Number(value))}>
+          <Select value={pageSize.toString()} onValueChange={(value) => handleSetPageSize(Number(value))}>
             <SelectTrigger id="pageSize" className="w-16 sm:w-20 flat-input text-xs sm:text-sm">
               <SelectValue />
             </SelectTrigger>
@@ -84,7 +110,7 @@ export default function PaginationComponent({
           <PaginationContent className="gap-1">
             <PaginationItem>
               <PaginationPrevious 
-                onClick={prevPage}
+                onClick={handlePrevPage}
                 className={`flat-button h-8 px-2 sm:h-9 sm:px-3 ${!hasPrevPage ? "pointer-events-none opacity-50" : "cursor-pointer"}`}
               >
                 <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -92,13 +118,13 @@ export default function PaginationComponent({
               </PaginationPrevious>
             </PaginationItem>
 
-            {/* Mobilde daha az sayfa göster */}
+            {/* Desktop: Sayfa numaraları */}
             <div className="hidden sm:flex items-center gap-1">
               {pageNumbers[0] > 1 && (
                 <>
                   <PaginationItem>
                     <PaginationLink 
-                      onClick={() => goToPage(1)}
+                      onClick={() => handleGoToPage(1)}
                       className="cursor-pointer flat-button"
                     >
                       1
@@ -115,7 +141,7 @@ export default function PaginationComponent({
               {pageNumbers.map((page) => (
                 <PaginationItem key={page}>
                   <PaginationLink
-                    onClick={() => goToPage(page)}
+                    onClick={() => handleGoToPage(page)}
                     isActive={currentPage === page}
                     className="cursor-pointer flat-button"
                   >
@@ -133,7 +159,7 @@ export default function PaginationComponent({
                   )}
                   <PaginationItem>
                     <PaginationLink 
-                      onClick={() => goToPage(totalPages)}
+                      onClick={() => handleGoToPage(totalPages)}
                       className="cursor-pointer flat-button"
                     >
                       {totalPages}
@@ -148,7 +174,7 @@ export default function PaginationComponent({
               {currentPage > 1 && (
                 <PaginationItem>
                   <PaginationLink
-                    onClick={() => goToPage(currentPage - 1)}
+                    onClick={() => handleGoToPage(currentPage - 1)}
                     className="cursor-pointer flat-button h-8 w-8 text-xs"
                   >
                     {currentPage - 1}
@@ -168,7 +194,7 @@ export default function PaginationComponent({
               {currentPage < totalPages && (
                 <PaginationItem>
                   <PaginationLink
-                    onClick={() => goToPage(currentPage + 1)}
+                    onClick={() => handleGoToPage(currentPage + 1)}
                     className="cursor-pointer flat-button h-8 w-8 text-xs"
                   >
                     {currentPage + 1}
@@ -179,7 +205,7 @@ export default function PaginationComponent({
 
             <PaginationItem>
               <PaginationNext 
-                onClick={nextPage}
+                onClick={handleNextPage}
                 className={`flat-button h-8 px-2 sm:h-9 sm:px-3 ${!hasNextPage ? "pointer-events-none opacity-50" : "cursor-pointer"}`}
               >
                 <span className="hidden sm:inline mr-1">Sonraki</span>

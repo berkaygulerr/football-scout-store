@@ -27,7 +27,6 @@ export class PlayerService {
       const url = `${API_ENDPOINTS.PLAYERS}?search=${encodeURIComponent(query)}`;
       return await apiRequest<PlayerSearchResult[]>(url);
     } catch (error) {
-      console.error(UI_MESSAGES.SEARCH_ERROR, error);
       throw new Error(handleApiError(error));
     }
   }
@@ -92,7 +91,6 @@ export class PlayerService {
         body: JSON.stringify({ ids }),
       });
     } catch (error) {
-      console.error(UI_MESSAGES.LOAD_ERROR, error);
       throw new Error(handleApiError(error));
     }
   }

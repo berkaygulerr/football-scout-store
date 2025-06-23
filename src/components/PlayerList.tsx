@@ -6,43 +6,17 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, Search } from "lucide-react";
 
 interface PlayerListProps {
-  isLoading: boolean;
-  paginatedItems: Player[];
+  players: Player[];
   currentPlayersData: Record<string, Player>;
+  isLoading: boolean;
   onDelete: (id: number) => void;
-  currentPage: number;
-  totalPages: number;
-  pageSize: number;
-  totalItems: number;
-  startIndex: number;
-  endIndex: number;
-  hasNextPage: boolean;
-  hasPrevPage: boolean;
-  goToPage: (page: number) => void;
-  nextPage: () => void;
-  prevPage: () => void;
-  setPageSize: (size: number) => void;
-  getPageNumbers: () => number[];
 }
 
-export default function PlayerList({
-  isLoading,
-  paginatedItems,
-  currentPlayersData,
-  onDelete,
-  currentPage,
-  totalPages,
-  pageSize,
-  totalItems,
-  startIndex,
-  endIndex,
-  hasNextPage,
-  hasPrevPage,
-  goToPage,
-  nextPage,
-  prevPage,
-  setPageSize,
-  getPageNumbers,
+export default function PlayerList({ 
+  players, 
+  currentPlayersData, 
+  isLoading, 
+  onDelete 
 }: PlayerListProps) {
   if (isLoading) {
     return (
@@ -53,7 +27,7 @@ export default function PlayerList({
     );
   }
 
-  if (paginatedItems.length === 0) {
+  if (players.length === 0) {
     return (
       <div className="text-center py-16">
         <Card className="max-w-md mx-auto flat-card">
@@ -74,7 +48,7 @@ export default function PlayerList({
   return (
     <>
       <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
-        {paginatedItems.map((player) => (
+        {players.map((player: Player) => (
           <div key={player.id} className="break-inside-avoid mb-6">
             <PlayerCard
               player={player}
@@ -86,21 +60,7 @@ export default function PlayerList({
       </div>
 
       <div className="mt-8">
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          pageSize={pageSize}
-          totalItems={totalItems}
-          startIndex={startIndex}
-          endIndex={endIndex}
-          hasNextPage={hasNextPage}
-          hasPrevPage={hasPrevPage}
-          goToPage={goToPage}
-          nextPage={nextPage}
-          prevPage={prevPage}
-          setPageSize={setPageSize}
-          getPageNumbers={getPageNumbers}
-        />
+        <Pagination />
       </div>
     </>
   );

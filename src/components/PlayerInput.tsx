@@ -28,7 +28,6 @@ export default function PlayerInput({ onSelect, disabled, className }: PlayerInp
           setPlayers(results);
           setShowResults(true);
         } catch (error) {
-          console.error('Oyuncu arama hatası:', error);
           setPlayers([]);
         } finally {
           setIsLoading(false);

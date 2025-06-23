@@ -1,6 +1,6 @@
 "use client";
-import { useState } from "react";
-import { FilterOptions, TeamWithCount } from "@/hooks/useFilters";
+
+import { useStore } from "@/store/useStore";
 import AddPlayerForm from "@/components/AddPlayerForm";
 import PlayerFilters from "@/components/PlayerFilters";
 import { Button } from "@/components/ui/button";
@@ -9,32 +9,17 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { UserPlus, Filter } from "lucide-react";
 
 interface SidePanelProps {
-  filters: FilterOptions;
-  updateFilter: <K extends keyof FilterOptions>(key: K, value: FilterOptions[K]) => void;
-  resetFilters: () => void;
-  uniqueTeams: string[];
-  teamsWithCount: TeamWithCount[];
-  totalCount: number;
-  filteredCount: number;
   onPlayerAdded: () => void;
 }
 
-export default function SidePanel({
-  filters,
-  updateFilter,
-  resetFilters,
-  uniqueTeams,
-  teamsWithCount,
-  totalCount,
-  filteredCount,
-  onPlayerAdded,
-}: SidePanelProps) {
+export default function SidePanel({ onPlayerAdded }: SidePanelProps) {
+  const { players, getFilteredPlayers } = useStore();
+  const filteredPlayers = getFilteredPlayers();
+
   return (
     <div className="w-full lg:w-80">
-      {/* Mobil Görünüm - Sheet ile Çekmece */}
       <div className="lg:hidden">
         <div className="flex gap-2 mb-4">
-          {/* Oyuncu Ekleme Sheet */}
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="outline" className="flex-1 flat-button">
@@ -58,14 +43,13 @@ export default function SidePanel({
             </SheetContent>
           </Sheet>
 
-          {/* Filtreler Sheet */}
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="outline" className="flex-1 relative flat-button">
                 <Filter className="h-4 w-4 mr-2" />
                 Filtreler
                 <Badge variant="secondary" className="ml-2 text-xs flat-button">
-                  {filteredCount}/{totalCount}
+                  {filteredPlayers.length}/{players.length}
                 </Badge>
               </Button>
             </SheetTrigger>
@@ -80,33 +64,16 @@ export default function SidePanel({
                 </SheetDescription>
               </SheetHeader>
               <div className="flex-1 overflow-y-auto pb-6">
-                <PlayerFilters
-                  filters={filters}
-                  updateFilter={updateFilter}
-                  resetFilters={resetFilters}
-                  uniqueTeams={uniqueTeams}
-                  teamsWithCount={teamsWithCount}
-                  totalCount={totalCount}
-                  filteredCount={filteredCount}
-                />
+                <PlayerFilters />
               </div>
             </SheetContent>
           </Sheet>
         </div>
       </div>
 
-      {/* Desktop Görünüm - Normal Statik */}
       <div className="hidden lg:block space-y-6">
         <AddPlayerForm onPlayerAdded={onPlayerAdded} />
-        <PlayerFilters
-          filters={filters}
-          updateFilter={updateFilter}
-          resetFilters={resetFilters}
-          uniqueTeams={uniqueTeams}
-          teamsWithCount={teamsWithCount}
-          totalCount={totalCount}
-          filteredCount={filteredCount}
-        />
+        <PlayerFilters />
       </div>
     </div>
   );

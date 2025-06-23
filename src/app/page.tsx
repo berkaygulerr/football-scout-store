@@ -1,8 +1,6 @@
 "use client";
-import { useEffect } from "react";
-import { usePlayers } from "@/hooks/usePlayers";
-import { useFilters } from "@/hooks/useFilters";
-import { usePagination } from "@/hooks/usePagination";
+import { useEffect, useState } from "react";
+import { useStore } from "@/store/useStore";
 import PlayerList from "@/components/PlayerList";
 import SidePanel from "@/components/SidePanel";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
@@ -12,63 +10,58 @@ import { Badge } from "@/components/ui/badge";
 import { RefreshCw, AlertCircle, TrendingUp } from "lucide-react";
 
 export default function Home() {
-  const {
+  const [mounted, setMounted] = useState(false);
+  
+  const { 
     players,
     currentPlayersData,
-    isLoading,
+    isLoading, 
     error,
-    loadPlayers,
+    fetchPlayers,
+    fetchCurrentPlayersData,
     deletePlayer,
-  } = usePlayers();
+    getFilteredPlayers,
+    getPaginatedPlayers,
+  } = useStore();
 
-  const {
-    filters,
-    filteredAndSortedPlayers,
-    updateFilter,
-    resetFilters,
-    uniqueTeams,
-    teamsWithCount,
-    totalFilteredCount,
-    totalCount,
-  } = useFilters(players);
-
-  const {
-    currentPage,
-    pageSize,
-    totalPages,
-    hasNextPage,
-    hasPrevPage,
-    paginatedItems,
-    goToPage,
-    nextPage,
-    prevPage,
-    setPageSize,
-    resetPage,
-    getPageNumbers,
-    startIndex,
-    endIndex,
-  } = usePagination(filteredAndSortedPlayers, 12);
+  const filteredPlayers = getFilteredPlayers();
+  const paginatedPlayers = getPaginatedPlayers();
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
-    if (currentPage > 1) resetPage();
-  }, [
-    filters.searchQuery,
-    filters.teamFilter,
-    filters.ageRange[0],
-    filters.ageRange[1],
-    filters.marketValueRange[0],
-    filters.marketValueRange[1],
-    filters.sortBy,
-    filters.sortOrder,
-  ]);
+    if (mounted && players.length === 0 && !isLoading && !error) {
+      fetchPlayers();
+    }
+  }, [mounted, players.length, isLoading, error, fetchPlayers]);
+
+  useEffect(() => {
+    if (players.length > 0) {
+      const ids = players.map(p => p.id);
+      fetchCurrentPlayersData(ids);
+    }
+  }, [players, fetchCurrentPlayersData]);
 
   const handlePlayerDelete = async (id: number) => {
-    try {
-      await deletePlayer(id);
-    } catch (error) {
-      console.error("Silme hatası:", error);
-    }
+    await deletePlayer(id);
   };
+
+  const handlePlayerAdded = () => {
+    fetchPlayers();
+  };
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <RefreshCw className="h-8 w-8 animate-spin mx-auto text-primary mb-4" />
+          <p className="text-muted-foreground">Uygulama yükleniyor...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (error) {
     return (
@@ -83,7 +76,11 @@ export default function Home() {
                   <p className="text-sm mt-1 text-muted-foreground">{error}</p>
                 </div>
               </div>
-              <Button variant="outline" onClick={loadPlayers} className="mt-3 flat-button">
+              <Button
+                variant="outline"
+                onClick={fetchPlayers}
+                className="mt-3 flat-button"
+              >
                 Tekrar Dene
               </Button>
             </CardContent>
@@ -105,28 +102,30 @@ export default function Home() {
               <div className="sm:hidden">
                 <Badge variant="secondary" className="text-xs flat-button">
                   <TrendingUp className="h-3 w-3 mr-1" />
-                  {totalFilteredCount}/{totalCount}
+                  {filteredPlayers.length}/{players.length}
                 </Badge>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-3">
               <div className="hidden sm:flex items-center gap-3">
                 <Badge variant="outline" className="text-sm flat-button">
                   <TrendingUp className="h-3 w-3 mr-1" />
-                  {totalFilteredCount} / {totalCount} oyuncu
+                  {filteredPlayers.length} / {players.length} oyuncu
                 </Badge>
               </div>
-              
+
               <ThemeToggle />
               <Button
                 variant="outline"
-                onClick={loadPlayers}
+                onClick={fetchPlayers}
                 disabled={isLoading}
                 size="sm"
                 className="flat-button"
               >
-                <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                <RefreshCw
+                  className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
+                />
                 <span className="hidden sm:inline">Yenile</span>
               </Button>
             </div>
@@ -136,36 +135,13 @@ export default function Home() {
 
       <div className="container mx-auto p-4 lg:p-8">
         <div className="flex flex-col lg:flex-row gap-6">
-          <SidePanel
-            filters={filters}
-            updateFilter={updateFilter}
-            resetFilters={resetFilters}
-            uniqueTeams={uniqueTeams}
-            teamsWithCount={teamsWithCount}
-            totalCount={totalCount}
-            filteredCount={totalFilteredCount}
-            onPlayerAdded={loadPlayers}
-          />
-
+          <SidePanel onPlayerAdded={handlePlayerAdded} />
           <div className="flex-1">
-            <PlayerList
-              isLoading={isLoading}
-              paginatedItems={paginatedItems}
+            <PlayerList 
+              players={paginatedPlayers}
               currentPlayersData={currentPlayersData}
-              onDelete={handlePlayerDelete}
-              currentPage={currentPage}
-              totalPages={totalPages}
-              pageSize={pageSize}
-              totalItems={totalFilteredCount}
-              startIndex={startIndex}
-              endIndex={endIndex}
-              hasNextPage={hasNextPage}
-              hasPrevPage={hasPrevPage}
-              goToPage={goToPage}
-              nextPage={nextPage}
-              prevPage={prevPage}
-              setPageSize={setPageSize}
-              getPageNumbers={getPageNumbers}
+              isLoading={isLoading}
+              onDelete={handlePlayerDelete} 
             />
           </div>
         </div>

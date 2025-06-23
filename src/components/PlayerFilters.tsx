@@ -1,5 +1,5 @@
 "use client";
-import { FilterOptions, TeamWithCount } from '@/hooks/useFilters';
+import { useStore } from "@/store/useStore";
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
@@ -8,57 +8,45 @@ import { Badge } from './ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Filter } from 'lucide-react';
 
-interface PlayerFiltersProps {
-  filters: FilterOptions;
-  updateFilter: <K extends keyof FilterOptions>(key: K, value: FilterOptions[K]) => void;
-  resetFilters: () => void;
-  uniqueTeams: string[];
-  teamsWithCount: TeamWithCount[];
-  totalCount: number;
-  filteredCount: number;
-}
+export default function PlayerFilters() {
+  const {
+    filters,
+    players,
+    setSearchQuery,
+    setTeamFilter,
+    setAgeRange,
+    setMarketValueRange,
+    setSorting,
+    resetFilters,
+    getFilteredPlayers,
+    getTeamsWithCount,
+  } = useStore();
 
-const handleAgeRangeChange = (
-  type: 'min' | 'max',
-  value: string,
-  currentRange: [number, number],
-  updateFilter: (key: 'ageRange', value: [number, number]) => void
-) => {
-  const numValue = Number(value);
-  if (type === 'min') {
-    const newMin = Math.max(15, Math.min(numValue, currentRange[1] - 1));
-    updateFilter('ageRange', [newMin, currentRange[1]]);
-  } else {
-    const newMax = Math.min(50, Math.max(numValue, currentRange[0] + 1));
-    updateFilter('ageRange', [currentRange[0], newMax]);
-  }
-};
+  const filteredPlayers = getFilteredPlayers();
+  const teamsWithCount = getTeamsWithCount();
 
-const handleMarketValueChange = (
-  type: 'min' | 'max',
-  value: string,
-  currentRange: [number, number],
-  updateFilter: (key: 'marketValueRange', value: [number, number]) => void
-) => {
-  const numValue = Number(value);
-  if (type === 'min') {
-    const newMinM = Math.max(0, Math.min(numValue, currentRange[1] / 1000000 - 1));
-    updateFilter('marketValueRange', [newMinM * 1000000, currentRange[1]]);
-  } else {
-    const newMaxM = Math.min(200, Math.max(numValue, currentRange[0] / 1000000 + 1));
-    updateFilter('marketValueRange', [currentRange[0], newMaxM * 1000000]);
-  }
-};
+  const handleAgeRangeChange = (type: 'min' | 'max', value: string) => {
+    const numValue = Number(value);
+    if (type === 'min') {
+      const newMin = Math.max(15, Math.min(numValue, filters.ageRange[1] - 1));
+      setAgeRange([newMin, filters.ageRange[1]]);
+    } else {
+      const newMax = Math.min(50, Math.max(numValue, filters.ageRange[0] + 1));
+      setAgeRange([filters.ageRange[0], newMax]);
+    }
+  };
 
-export default function PlayerFilters({
-  filters,
-  updateFilter,
-  resetFilters,
-  uniqueTeams,
-  teamsWithCount,
-  totalCount,
-  filteredCount,
-}: PlayerFiltersProps) {
+  const handleMarketValueChange = (type: 'min' | 'max', value: string) => {
+    const numValue = Number(value);
+    if (type === 'min') {
+      const newMinM = Math.max(0, Math.min(numValue, filters.marketValueRange[1] / 1000000 - 1));
+      setMarketValueRange([newMinM * 1000000, filters.marketValueRange[1]]);
+    } else {
+      const newMaxM = Math.min(200, Math.max(numValue, filters.marketValueRange[0] / 1000000 + 1));
+      setMarketValueRange([filters.marketValueRange[0], newMaxM * 1000000]);
+    }
+  };
+
   return (
     <Card className="flat-card">
       <CardHeader className="pb-4">
@@ -68,7 +56,7 @@ export default function PlayerFilters({
             Filtreler
           </CardTitle>
           <Badge variant="outline" className="text-sm font-medium flat-button">
-            {filteredCount}/{totalCount}
+            {filteredPlayers.length}/{players.length}
           </Badge>
         </div>
       </CardHeader>
@@ -83,7 +71,7 @@ export default function PlayerFilters({
             type="text"
             placeholder="Oyuncu adı, takım..."
             value={filters.searchQuery}
-            onChange={(e) => updateFilter('searchQuery', e.target.value)}
+            onChange={(e) => setSearchQuery(e.target.value)}
             className="flat-input"
           />
         </div>
@@ -94,7 +82,7 @@ export default function PlayerFilters({
           </Label>
           <Select 
             value={filters.teamFilter || 'all'} 
-            onValueChange={(value) => updateFilter('teamFilter', value === 'all' ? '' : value)}
+            onValueChange={(value) => setTeamFilter(value === 'all' ? '' : value)}
           >
             <SelectTrigger className="flat-input">
               <SelectValue placeholder="Tüm takımlar" />
@@ -129,7 +117,7 @@ export default function PlayerFilters({
                 type="number"
                 placeholder="Min yaş"
                 value={filters.ageRange[0]}
-                onChange={(e) => handleAgeRangeChange('min', e.target.value, filters.ageRange, updateFilter)}
+                onChange={(e) => handleAgeRangeChange('min', e.target.value)}
                 className="flat-input"
               />
             </div>
@@ -142,7 +130,7 @@ export default function PlayerFilters({
                 type="number"
                 placeholder="Max yaş"
                 value={filters.ageRange[1]}
-                onChange={(e) => handleAgeRangeChange('max', e.target.value, filters.ageRange, updateFilter)}
+                onChange={(e) => handleAgeRangeChange('max', e.target.value)}
                 className="flat-input"
               />
             </div>
@@ -163,7 +151,7 @@ export default function PlayerFilters({
                 type="number"
                 placeholder="Min değer"
                 value={Math.round(filters.marketValueRange[0] / 1000000)}
-                onChange={(e) => handleMarketValueChange('min', e.target.value, filters.marketValueRange, updateFilter)}
+                onChange={(e) => handleMarketValueChange('min', e.target.value)}
                 className="flat-input"
               />
             </div>
@@ -176,7 +164,7 @@ export default function PlayerFilters({
                 type="number"
                 placeholder="Max değer"
                 value={Math.round(filters.marketValueRange[1] / 1000000)}
-                onChange={(e) => handleMarketValueChange('max', e.target.value, filters.marketValueRange, updateFilter)}
+                onChange={(e) => handleMarketValueChange('max', e.target.value)}
                 className="flat-input"
               />
             </div>
@@ -194,43 +182,34 @@ export default function PlayerFilters({
               </Label>
               <Select 
                 value={filters.sortBy} 
-                onValueChange={(value) => updateFilter('sortBy', value as FilterOptions['sortBy'])}
+                onValueChange={(value) => setSorting(value as any, filters.sortOrder)}
               >
                 <SelectTrigger className="flat-input">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="flat-card">
-                  <SelectItem value="player_id">Eklenme Sırası</SelectItem>
+                  <SelectItem value="player_id">ID</SelectItem>
                   <SelectItem value="name">İsim</SelectItem>
                   <SelectItem value="age">Yaş</SelectItem>
-                  <SelectItem value="market_value">Market Değeri</SelectItem>
                   <SelectItem value="team">Takım</SelectItem>
+                  <SelectItem value="market_value">Market Değeri</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
               <Label htmlFor="sortOrder" className="text-xs text-muted-foreground">
-                Yön
+                Düzen
               </Label>
               <Select 
                 value={filters.sortOrder} 
-                onValueChange={(value) => updateFilter('sortOrder', value as FilterOptions['sortOrder'])}
+                onValueChange={(value) => setSorting(filters.sortBy, value as any)}
               >
                 <SelectTrigger className="flat-input">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="flat-card">
-                  {filters.sortBy === 'player_id' ? (
-                    <>
-                      <SelectItem value="desc">En Yeni</SelectItem>
-                      <SelectItem value="asc">En Eski</SelectItem>
-                    </>
-                  ) : (
-                    <>
-                      <SelectItem value="asc">Artan (A-Z, 0-9)</SelectItem>
-                      <SelectItem value="desc">Azalan (Z-A, 9-0)</SelectItem>
-                    </>
-                  )}
+                  <SelectItem value="asc">Artan</SelectItem>
+                  <SelectItem value="desc">Azalan</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -242,7 +221,7 @@ export default function PlayerFilters({
           onClick={resetFilters}
           className="w-full flat-button"
         >
-          Filtreleri Sıfırla
+          Filtreleri Temizle
         </Button>
       </CardContent>
     </Card>
