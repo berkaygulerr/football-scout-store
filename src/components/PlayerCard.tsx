@@ -118,7 +118,7 @@ export default function PlayerCard({ player, currentData, onDelete }: PlayerCard
               </span>
               {hasChanges && currentData.age !== player.age && (
                 <div className="text-xs text-muted-foreground">
-                  Tespit: {player.age}
+                  Eklenen: {player.age}
                 </div>
               )}
             </div>
@@ -133,7 +133,7 @@ export default function PlayerCard({ player, currentData, onDelete }: PlayerCard
               {hasChanges && currentData.market_value !== player.market_value && (
                 <div className="text-xs mt-1 space-y-1">
                   <div className="text-muted-foreground">
-                    Tespit: €{formatNumber(player.market_value)}
+                    Eklenen: €{formatNumber(player.market_value)}
                   </div>
                   <div className={`flex items-center gap-1 font-medium ${
                     valueChange > 0 

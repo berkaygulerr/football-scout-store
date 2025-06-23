@@ -38,7 +38,7 @@ export const UI_MESSAGES = {
   ADD_ERROR: "Oyuncu eklenemedi",
   DELETE_ERROR: "Oyuncu silinemedi",
   SEARCH_ERROR: "Arama sırasında bir hata oluştu",
-  API_ERROR: "API hatası oluştu",
+  API_ERROR: "API hatası",
   INVALID_ID: "Geçersiz ID",
   INVALID_DATA: "Geçersiz veri",
   SERVER_ERROR: "Sunucu hatası",
@@ -46,7 +46,7 @@ export const UI_MESSAGES = {
   // Info Messages
   NO_RESULTS: "Sonuç bulunamadı",
   LOADING: "Yükleniyor...",
-  NO_TEAM: "Takımı yok",
+  NO_TEAM: "Bilinmeyen Takım",
 } as const;
 
 // Default Values

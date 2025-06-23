@@ -8,6 +8,18 @@ import { Badge } from './ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Filter } from 'lucide-react';
 
+const getSortLabel = (sortBy: string, sortOrder: 'asc' | 'desc'): string => {
+  const labels = {
+    player_id: { asc: 'En Eski', desc: 'En Yeni' },
+    name: { asc: 'A-Z', desc: 'Z-A' },
+    age: { asc: 'Küçükten Büyüğe', desc: 'Büyükten Küçüğe' },
+    team: { asc: 'A-Z', desc: 'Z-A' },
+    market_value: { asc: 'Düşükten Yükseğe', desc: 'Yüksekten Düşüğe' }
+  };
+
+  return labels[sortBy as keyof typeof labels]?.[sortOrder] || (sortOrder === 'asc' ? 'Artan' : 'Azalan');
+};
+
 export default function PlayerFilters() {
   const {
     filters,
@@ -188,7 +200,7 @@ export default function PlayerFilters() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="flat-card">
-                  <SelectItem value="player_id">ID</SelectItem>
+                  <SelectItem value="player_id">Eklenme Sırası</SelectItem>
                   <SelectItem value="name">İsim</SelectItem>
                   <SelectItem value="age">Yaş</SelectItem>
                   <SelectItem value="team">Takım</SelectItem>
@@ -208,8 +220,12 @@ export default function PlayerFilters() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="flat-card">
-                  <SelectItem value="asc">Artan</SelectItem>
-                  <SelectItem value="desc">Azalan</SelectItem>
+                  <SelectItem value="asc">
+                    {getSortLabel(filters.sortBy, 'asc')}
+                  </SelectItem>
+                  <SelectItem value="desc">
+                    {getSortLabel(filters.sortBy, 'desc')}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
