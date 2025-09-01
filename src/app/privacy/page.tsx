@@ -28,8 +28,8 @@ export default function PrivacyPage() {
           <section className="space-y-2">
             <h2 className="text-lg font-semibold">1. Giriş</h2>
             <p>
-              GoldenScout ("biz", "bizim" veya "platformumuz") olarak, web sitemizi ve hizmetlerimizi kullanırken gizliliğinize önem veriyoruz. 
-              Bu Gizlilik Politikası, 6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") kapsamında kişisel verilerinizin nasıl toplandığını, 
+              GoldenScout (&ldquo;biz&rdquo;, &ldquo;bizim&rdquo; veya &ldquo;platformumuz&rdquo;) olarak, web sitemizi ve hizmetlerimizi kullanırken gizliliğinize önem veriyoruz. 
+              Bu Gizlilik Politikası, 6698 sayılı Kişisel Verilerin Korunması Kanunu (&ldquo;KVKK&rdquo;) kapsamında kişisel verilerinizin nasıl toplandığını, 
               kullanıldığını, paylaşıldığını ve korunduğunu açıklamaktadır.
             </p>
           </section>
@@ -101,7 +101,7 @@ export default function PrivacyPage() {
             </ul>
             <p>
               Kişisel verileriniz, açık rızanız olmaksızın yurt dışına aktarılmamaktadır. Ancak, hizmet sağlayıcılarımızın yurt dışında bulunması 
-              durumunda, KVKK'nın 9. maddesi uyarınca gerekli güvenlik önlemleri alınarak ve Kişisel Verileri Koruma Kurulu'nun izni alınarak 
+              durumunda, KVKK&apos;nın 9. maddesi uyarınca gerekli güvenlik önlemleri alınarak ve Kişisel Verileri Koruma Kurulu&apos;nun izni alınarak 
               verileriniz yurt dışına aktarılabilir.
             </p>
           </section>
@@ -161,7 +161,7 @@ export default function PrivacyPage() {
           <section className="space-y-2">
             <h2 className="text-lg font-semibold">10. KVKK Kapsamındaki Haklarınız</h2>
             <p>
-              KVKK'nın 11. maddesi uyarınca aşağıdaki haklara sahipsiniz:
+              KVKK&apos;nın 11. maddesi uyarınca aşağıdaki haklara sahipsiniz:
             </p>
             <ul className="list-disc pl-6 space-y-1">
               <li>Kişisel verilerinizin işlenip işlenmediğini öğrenme</li>
@@ -169,7 +169,7 @@ export default function PrivacyPage() {
               <li>Kişisel verilerinizin işlenme amacını ve bunların amacına uygun kullanılıp kullanılmadığını öğrenme</li>
               <li>Yurt içinde veya yurt dışında kişisel verilerinizin aktarıldığı üçüncü kişileri bilme</li>
               <li>Kişisel verilerinizin eksik veya yanlış işlenmiş olması hâlinde bunların düzeltilmesini isteme</li>
-              <li>KVKK'nın 7. maddesinde öngörülen şartlar çerçevesinde kişisel verilerinizin silinmesini veya yok edilmesini isteme</li>
+              <li>KVKK&apos;nın 7. maddesinde öngörülen şartlar çerçevesinde kişisel verilerinizin silinmesini veya yok edilmesini isteme</li>
               <li>Düzeltme, silme ve yok edilme taleplerinizin, kişisel verilerinizin aktarıldığı üçüncü kişilere bildirilmesini isteme</li>
               <li>İşlenen verilerinizin münhasıran otomatik sistemler vasıtasıyla analiz edilmesi suretiyle aleyhinize bir sonucun ortaya çıkmasına itiraz etme</li>
               <li>Kişisel verilerinizin kanuna aykırı olarak işlenmesi sebebiyle zarara uğramanız hâlinde zararın giderilmesini talep etme</li>

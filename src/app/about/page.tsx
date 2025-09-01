@@ -20,7 +20,7 @@ export default function AboutPage() {
               Kullanıcılar, oyuncuları ekleyebilir, düzenleyebilir, filtreleyebilir ve değer değişimlerini takip edebilir.
             </p>
             <p>
-              Bu platform, futbol scout'larının, antrenörlerin ve futbol tutkunlarının oyuncu verilerini 
+              Bu platform, futbol scout&apos;larının, antrenörlerin ve futbol tutkunlarının oyuncu verilerini 
               organize bir şekilde yönetmesine olanak tanır. Kullanıcı dostu arayüzü ve güçlü filtreleme 
               özellikleriyle, oyuncu takibini kolaylaştırmayı amaçlıyoruz.
             </p>
