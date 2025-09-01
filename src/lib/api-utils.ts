@@ -34,8 +34,8 @@ export async function apiRequest<T>(
   try {
     const response = await fetch(url, {
       ...options,
-      cache: "no-store",
-      next: { revalidate: 0 },
+      // cache: "no-store" kullanımını kaldır
+      next: { revalidate: 0 }, // Bunun yerine next.revalidate kullan
     });
 
     if (!response.ok) {
@@ -68,4 +68,4 @@ export function handleApiError(error: unknown): string {
     return error;
   }
   return UI_MESSAGES.SERVER_ERROR;
-} 
+}

@@ -13,7 +13,10 @@ export async function GET(req: NextRequest) {
       return createApiError("ID parametresi gerekli", 400);
     }
 
-    const response = await fetch(`${process.env.API_URL}/player/${id}`);
+    // Next.js 13.4+ için önerilen fetch yapısı
+    const response = await fetch(`${process.env.API_URL}/player/${id}`, {
+      next: { revalidate: 0 }, // cache: "no-store" yerine revalidate: 0 kullan
+    });
 
     if (!response.ok) {
       return createApiError("Dış API isteği başarısız", response.status);
