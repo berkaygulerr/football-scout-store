@@ -61,7 +61,7 @@ const defaultFilters: FilterOptions = {
   searchQuery: '',
   teamFilter: '',
   ageRange: [15, 50],
-  marketValueRange: [0, 200000000],
+  marketValueRange: [0, Number.MAX_SAFE_INTEGER], // Sonsuz değer için MAX_SAFE_INTEGER kullanıldı
   sortBy: 'player_id',
   sortOrder: 'desc',
 };

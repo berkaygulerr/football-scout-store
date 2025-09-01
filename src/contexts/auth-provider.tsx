@@ -10,10 +10,11 @@ type AuthContextState = {
   loading: boolean;
   signInWithOtp: (email: string) => Promise<{ error: Error | null }>;
   signInWithPassword: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUpWithPassword: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signUpWithPassword: (email: string, password: string, username: string, fullName?: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<{ error: Error | null }>;
   resetPasswordForEmail: (email: string, redirectTo?: string) => Promise<{ error: Error | null }>;
   updateUserPassword: (newPassword: string) => Promise<{ error: Error | null }>;
+  checkUsernameExists: (username: string) => Promise<boolean>;
 };
 
 const AuthContext = createContext<AuthContextState | undefined>(undefined);
@@ -59,9 +60,70 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       return { error: error ?? null };
     },
-    async signUpWithPassword(email: string, password: string) {
-      const { error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin } });
-      return { error: error ?? null };
+    async checkUsernameExists(username: string) {
+      try {
+        // Kullanıcı adı kontrolü yap
+        const { data, error } = await supabase
+          .from('user_profile')
+          .select('username')
+          .ilike('username', username)
+          .limit(1);
+        
+        if (error) {
+          console.error("Kullanıcı adı kontrolü hatası:", error);
+          throw error;
+        }
+        
+        // Eğer veri varsa kullanıcı adı zaten kullanımda
+        return data && data.length > 0;
+      } catch (error) {
+        console.error("Kullanıcı adı kontrolü başarısız:", error);
+        return false; // Hata durumunda güvenli tarafta kal
+      }
+    },
+    async signUpWithPassword(email: string, password: string, username: string, fullName?: string) {
+      try {
+        // 1. Önce kullanıcı adının kullanımda olup olmadığını kontrol et
+        const usernameExists = await value.checkUsernameExists(username);
+        if (usernameExists) {
+          throw new Error("Bu kullanıcı adı zaten kullanımda");
+        }
+        
+        // 2. Kullanıcıyı auth.users tablosuna kaydet
+        const { data: authData, error: authError } = await supabase.auth.signUp({ 
+          email, 
+          password, 
+          options: { 
+            emailRedirectTo: window.location.origin,
+            data: {
+              username,
+              full_name: fullName || null
+            }
+          } 
+        });
+        
+        if (authError) throw authError;
+        
+        // 3. Kullanıcı başarıyla oluşturulduysa user_profile tablosuna kaydet
+        if (authData.user) {
+          const { error: profileError } = await supabase.from('user_profile').insert({
+            user_id: authData.user.id,
+            username: username,
+            full_name: fullName || null
+          });
+          
+          if (profileError) {
+            console.error("Profil oluşturma hatası:", profileError);
+            // Profil oluşturulamadıysa, auth kullanıcısını da sil
+            await supabase.auth.admin.deleteUser(authData.user.id);
+            throw new Error("Profil oluşturulamadı: " + profileError.message);
+          }
+        }
+        
+        return { error: null };
+      } catch (error) {
+        return { error: error as Error };
+      }
     },
     async signOut() {
       const { error } = await supabase.auth.signOut();
@@ -87,5 +149,3 @@ export function useAuth() {
   if (!ctx) throw new Error("useAuth, AuthProvider içinde kullanılmalıdır");
   return ctx;
 }
-
-

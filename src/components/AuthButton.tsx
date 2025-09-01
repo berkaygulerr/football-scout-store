@@ -6,12 +6,44 @@ import { useAuth } from "@/contexts/auth-provider";
 import { Button } from "@/components/ui/button";
 import { LogOut, User } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useEffect, useState } from "react";
+import { createBrowserSupabaseClient } from "@/lib/supabase-browser";
 
 export default function AuthButton() {
   const { user, loading, signOut } = useAuth();
   const router = useRouter();
+  const [username, setUsername] = useState<string>("");
+  const [loadingUsername, setLoadingUsername] = useState(false);
 
-  if (loading) {
+  useEffect(() => {
+    const fetchUsername = async () => {
+      if (user?.id) {
+        setLoadingUsername(true);
+        try {
+          const supabase = createBrowserSupabaseClient();
+          const { data, error } = await supabase
+            .from('user_profile')
+            .select('username')
+            .eq('user_id', user.id)
+            .single();
+          
+          if (data && data.username) {
+            setUsername(data.username);
+          }
+        } catch (error) {
+          console.error("Kullanıcı adı getirme hatası:", error);
+        } finally {
+          setLoadingUsername(false);
+        }
+      }
+    };
+
+    if (user) {
+      fetchUsername();
+    }
+  }, [user]);
+
+  if (loading || loadingUsername) {
     return (
       <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-md bg-muted animate-pulse" />
     );
@@ -31,8 +63,9 @@ export default function AuthButton() {
     router.refresh();
   };
 
-  const userEmail = user.email || "";
-  const userInitial = userEmail.charAt(0).toUpperCase();
+  // Kullanıcı adı varsa onu, yoksa e-postanın ilk harfini göster
+  const displayName = username || user.email || "";
+  const userInitial = username ? username.charAt(0).toUpperCase() : (user.email ? user.email.charAt(0).toUpperCase() : "?");
 
   return (
     <DropdownMenu>
@@ -42,9 +75,12 @@ export default function AuthButton() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="flex items-center gap-2">
-          <User className="h-4 w-4 text-muted-foreground" />
-          <span className="truncate text-xs sm:text-sm">{userEmail}</span>
+        <DropdownMenuLabel className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <User className="h-4 w-4 text-muted-foreground" />
+            <span className="font-medium text-sm">{username}</span>
+          </div>
+          <span className="text-xs text-muted-foreground truncate">{user.email}</span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive focus:text-destructive text-xs sm:text-sm">

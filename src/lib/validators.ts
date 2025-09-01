@@ -42,7 +42,7 @@ export function validateAgeRange(min: number, max: number): string | null {
  */
 export function validateMarketValueRange(min: number, max: number): string | null {
   if (min < API_CONFIG.MIN_MARKET_VALUE || max > API_CONFIG.MAX_MARKET_VALUE) {
-    return `Market değeri ${API_CONFIG.MIN_MARKET_VALUE}-${API_CONFIG.MAX_MARKET_VALUE} arasında olmalıdır`;
+    return `Piyasa değeri ${API_CONFIG.MIN_MARKET_VALUE}-${API_CONFIG.MAX_MARKET_VALUE} arasında olmalıdır`;
   }
 
   if (min >= max) {

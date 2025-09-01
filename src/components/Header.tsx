@@ -2,7 +2,7 @@
 
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Menu, Compass, Users } from "lucide-react";
+import { RefreshCw, Menu } from "lucide-react";
 import AuthButton from "@/components/AuthButton";
 import MainNav from "@/components/MainNav";
 import { useStore } from "@/store/useStore";
@@ -11,6 +11,50 @@ import Link from "next/link";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
+
+// Navigasyon öğeleri - MainNav ile aynı olmalı
+const navItems = [
+  {
+    name: "Keşfet",
+    href: "/",
+    icon: () => (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="h-4 w-4"
+      >
+        <circle cx="12" cy="12" r="10" />
+        <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+      </svg>
+    ),
+  },
+  {
+    name: "Tüm Oyuncular",
+    href: "/players",
+    icon: () => (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="h-4 w-4"
+      >
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      </svg>
+    ),
+  },
+];
 
 export default function Header() {
   const { fetchPlayers } = useStore();
@@ -76,7 +120,7 @@ export default function Header() {
                             )}
                             onClick={() => setIsOpen(false)}
                           >
-                            <Icon className="h-5 w-5" />
+                            <Icon />
                             <span>{item.name}</span>
                           </Link>
                         );
@@ -104,17 +148,3 @@ export default function Header() {
     </header>
   );
 }
-
-// Navigasyon öğeleri
-const navItems = [
-  {
-    name: "Keşfet",
-    href: "/",
-    icon: Compass,
-  },
-  {
-    name: "Tüm Oyuncular",
-    href: "/players",
-    icon: Users,
-  },
-];

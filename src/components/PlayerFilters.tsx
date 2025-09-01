@@ -57,12 +57,21 @@ export default function PlayerFilters() {
     if (isNaN(numValue)) return;
     
     if (type === 'min') {
-      const newMinM = Math.max(0, Math.min(numValue, filters.marketValueRange[1] / 1000000 - 1));
+      // Minimum değer için maksimum değer sınırı yok (sonsuz olabilir)
+      const newMinM = Math.max(0, numValue);
       setMarketValueRange([newMinM * 1000000, filters.marketValueRange[1]]);
     } else {
-      const newMaxM = Math.min(200, Math.max(numValue, filters.marketValueRange[0] / 1000000 + 1));
+      // Maksimum değer için sınır yok, sadece minimum değerden büyük olmalı
+      const newMaxM = Math.max(numValue, filters.marketValueRange[0] / 1000000 + 1);
       setMarketValueRange([filters.marketValueRange[0], newMaxM * 1000000]);
     }
+  };
+
+  // Maksimum değer sonsuz ise "∞" göster, değilse sayısal değeri göster
+  const displayMaxValue = () => {
+    const maxValue = filters.marketValueRange[1];
+    if (maxValue === Number.MAX_SAFE_INTEGER) return "∞";
+    return Math.round(maxValue / 1000000);
   };
 
   return (
@@ -161,7 +170,7 @@ export default function PlayerFilters() {
 
         <div className="space-y-4">
           <Label className="text-sm font-medium">
-            Market Değeri Aralığı (M€)
+            Piyasa Değeri Aralığı (M€)
           </Label>
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -176,7 +185,6 @@ export default function PlayerFilters() {
                 onChange={(e) => handleMarketValueChange('min', e.target.value)}
                 className="flat-input"
                 min={0}
-                max={199}
               />
             </div>
             <div>
@@ -187,11 +195,10 @@ export default function PlayerFilters() {
                 id="maxValue"
                 type="number"
                 placeholder="Max değer"
-                value={Math.round(filters.marketValueRange[1] / 1000000)}
+                value={displayMaxValue()}
                 onChange={(e) => handleMarketValueChange('max', e.target.value)}
                 className="flat-input"
                 min={1}
-                max={200}
               />
             </div>
           </div>

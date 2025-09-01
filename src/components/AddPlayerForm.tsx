@@ -139,7 +139,7 @@ export default function AddPlayerForm({ onPlayerAdded }: AddPlayerFormProps) {
                   <div className="font-medium">{selectedPlayerData.age}</div>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Market Değeri:</span>
+                  <span className="text-muted-foreground">Piyasa Değeri:</span>
                   <div className="font-medium">€{(selectedPlayerData.market_value / 1000000).toFixed(1)}M</div>
                 </div>
               </div>

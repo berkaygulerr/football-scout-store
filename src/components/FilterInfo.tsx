@@ -26,7 +26,7 @@ export default function FilterInfo() {
     filters.ageRange[0] !== 15 || 
     filters.ageRange[1] !== 50 || 
     filters.marketValueRange[0] !== 0 || 
-    filters.marketValueRange[1] !== 200000000;
+    filters.marketValueRange[1] !== Number.MAX_SAFE_INTEGER; // Değiştirildi
   
   // Varsayılan sıralama dışında bir sıralama var mı?
   const isCustomSorting = filters.sortBy !== 'player_id' || filters.sortOrder !== 'desc';
@@ -37,7 +37,7 @@ export default function FilterInfo() {
     name: 'İsim',
     age: 'Yaş',
     team: 'Takım',
-    market_value: 'Market Değeri',
+    market_value: 'Piyasa Değeri',
     value_increase: 'Değer Değişimi'
   };
 
@@ -77,7 +77,7 @@ export default function FilterInfo() {
         setAgeRange([15, 50]);
         break;
       case 'value':
-        setMarketValueRange([0, 200000000]);
+        setMarketValueRange([0, Number.MAX_SAFE_INTEGER]); // Değiştirildi
         break;
       case 'sort':
         setSorting('player_id', 'desc');
@@ -85,6 +85,13 @@ export default function FilterInfo() {
       default:
         break;
     }
+  };
+
+  // Maksimum değer sonsuz ise "∞" göster
+  const displayMaxValue = () => {
+    const maxValue = filters.marketValueRange[1];
+    if (maxValue === Number.MAX_SAFE_INTEGER) return "∞";
+    return formatNumber(maxValue);
   };
 
   // Sıralama için özel ikon
@@ -148,9 +155,9 @@ export default function FilterInfo() {
           </Badge>
         )}
         
-        {(filters.marketValueRange[0] !== 0 || filters.marketValueRange[1] !== 200000000) && (
+        {(filters.marketValueRange[0] !== 0 || filters.marketValueRange[1] !== Number.MAX_SAFE_INTEGER) && (
           <Badge variant="outline" className="flex items-center gap-1 pl-2 pr-1 py-1 text-xs">
-            <span>Değer: €{formatNumber(filters.marketValueRange[0])}-€{formatNumber(filters.marketValueRange[1])}</span>
+            <span>Değer: €{formatNumber(filters.marketValueRange[0])}-€{displayMaxValue()}</span>
             <Button 
               variant="ghost" 
               size="icon" 

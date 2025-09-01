@@ -4,6 +4,7 @@ import "./global.css"
 import { ThemeProvider } from '@/contexts/theme-provider';
 import { AuthProvider } from '@/contexts/auth-provider';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -19,10 +20,10 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: 'ScoutGFUT',
+  title: 'GoldenScout',
   description: 'Futbol oyuncuları yönetim sistemi - Oyuncuları ekleyin, görüntüleyin ve yönetin',
   keywords: ['futbol', 'oyuncu', 'yönetim', 'football', 'player management', 'scout'],
-  authors: [{ name: 'ScoutGFUT' }],
+  authors: [{ name: 'GoldenScout' }],
 }
 
 export const viewport: Viewport = {
@@ -50,6 +51,7 @@ export default function RootLayout({
               <div className="flex-1">
                 {children}
               </div>
+              <Footer />
             </div>
           </AuthProvider>
         </ThemeProvider>
