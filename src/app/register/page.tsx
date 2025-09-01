@@ -1,17 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-provider";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Info } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Loader2, Info, RefreshCw } from "lucide-react";
 import Link from "next/link";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useDebounce } from "@/hooks/useDebounce";
 
-export default function RegisterPage() {
+// Ana içerik bileşeni
+function RegisterContent() {
   const router = useRouter();
   const { signUpWithPassword, checkUsernameExists } = useAuth();
   const [email, setEmail] = useState("");
@@ -22,109 +24,83 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [usernameError, setUsernameError] = useState<string | null>(null);
   const [isCheckingUsername, setIsCheckingUsername] = useState(false);
-  
-  // KVKK onayları için state'ler
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [acceptPrivacy, setAcceptPrivacy] = useState(false);
   const [acceptMarketing, setAcceptMarketing] = useState(false);
 
-  // Kullanıcı adı değiştiğinde kontrol et
-  const handleUsernameChange = async (value: string) => {
-    const lowerValue = value.toLowerCase();
-    setUsername(lowerValue);
-    
-    // Temel doğrulama
-    if (lowerValue.length === 0) {
+  const debouncedUsername = useDebounce(username, 500);
+
+  const validateUsername = useCallback(async (currentUsername: string) => {
+    if (!currentUsername) {
+      setUsernameError("Kullanıcı adı boş bırakılamaz.");
+      return false;
+    }
+    if (currentUsername.length < 3) {
+      setUsernameError("Kullanıcı adı en az 3 karakter olmalıdır.");
+      return false;
+    }
+    if (!/^[a-z0-9_]+$/.test(currentUsername)) {
+      setUsernameError("Sadece küçük harfler, rakamlar ve alt çizgi (_) kullanabilirsiniz.");
+      return false;
+    }
+
+    setIsCheckingUsername(true);
+    const exists = await checkUsernameExists(currentUsername.toLowerCase());
+    setIsCheckingUsername(false);
+
+    if (exists) {
+      setUsernameError("Bu kullanıcı adı zaten alınmış.");
+      return false;
+    }
+
+    setUsernameError(null);
+    return true;
+  }, [checkUsernameExists]);
+
+  useEffect(() => {
+    if (debouncedUsername) {
+      validateUsername(debouncedUsername);
+    } else {
       setUsernameError(null);
-      return;
     }
-    
-    if (lowerValue.length < 3) {
-      setUsernameError("Kullanıcı adı en az 3 karakter olmalıdır");
-      return;
-    }
-    
-    if (!/^[a-z0-9_]+$/.test(lowerValue)) {
-      setUsernameError("Kullanıcı adı sadece küçük harfler, rakamlar ve alt çizgi içerebilir");
-      return;
-    }
-    
-    // Kullanıcı adı uygunsa ve en az 3 karakter ise, veritabanında kontrol et
-    if (lowerValue.length >= 3) {
-      setIsCheckingUsername(true);
-      setUsernameError(null);
-      
-      try {
-        const exists = await checkUsernameExists(lowerValue);
-        if (exists) {
-          setUsernameError("Bu kullanıcı adı zaten kullanılıyor");
-        }
-      } catch (error) {
-        console.error("Kullanıcı adı kontrolü hatası:", error);
-      } finally {
-        setIsCheckingUsername(false);
-      }
-    }
+  }, [debouncedUsername, validateUsername]);
+
+  const handleUsernameChange = (value: string) => {
+    setUsername(value.toLowerCase());
+    setUsernameError(null); // Clear error on change
   };
 
   const onRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Form doğrulama
-    if (username.length < 3) {
-      setError("Kullanıcı adı en az 3 karakter olmalıdır");
-      return;
-    }
-    
-    if (!/^[a-z0-9_]+$/.test(username)) {
-      setError("Kullanıcı adı sadece küçük harfler, rakamlar ve alt çizgi içerebilir");
-      return;
-    }
-    
-    if (usernameError) {
-      setError(usernameError);
-      return;
-    }
-    
-    // KVKK kontrolleri
-    if (!acceptTerms || !acceptPrivacy) {
-      setError("Kullanım koşulları ve gizlilik politikasını kabul etmelisiniz");
-      return;
-    }
-    
-    setIsLoading(true);
     setError(null);
-    
-    try {
-      // Kullanıcı adını son kez kontrol et
-      const exists = await checkUsernameExists(username);
-      if (exists) {
-        setError("Bu kullanıcı adı zaten kullanılıyor");
-        setIsLoading(false);
-        return;
-      }
-      
-      // Kayıt işlemini gerçekleştir
-      const { error } = await signUpWithPassword(email, password, username, fullName || undefined);
-      
-      if (error) {
-        if (error.message.includes("username")) {
-          setError("Bu kullanıcı adı zaten kullanılıyor");
-        } else {
-          setError(error.message);
-        }
-        return;
-      }
-      
-      alert("Kayıt başarılı! E-postanıza doğrulama bağlantısı gönderilmiş olabilir.");
-      router.push("/login");
-    } catch (err) {
-      setError("Kayıt sırasında bir hata oluştu");
-      console.error(err);
-    } finally {
-      setIsLoading(false);
+
+    const isUsernameValid = await validateUsername(username);
+    if (!isUsernameValid) {
+      return;
     }
+
+    if (!acceptTerms || !acceptPrivacy) {
+      setError("Kullanım Koşulları ve Gizlilik Politikası'nı kabul etmelisiniz.");
+      return;
+    }
+
+    setIsLoading(true);
+    const { error: signUpError } = await signUpWithPassword(email, password, username, fullName);
+    setIsLoading(false);
+
+    if (signUpError) {
+      if (signUpError.message.includes("username")) {
+        setUsernameError("Bu kullanıcı adı zaten alınmış.");
+      } else {
+        setError(signUpError.message);
+      }
+      return;
+    }
+    alert("Kayıt başarılı! E-postanıza doğrulama bağlantısı gönderilmiş olabilir.");
+    router.push("/login");
   };
+
+  const isFormValid = email && password && username && !usernameError && !isCheckingUsername && acceptTerms && acceptPrivacy;
 
   return (
     <main className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -168,7 +144,7 @@ export default function RegisterPage() {
                 <p className="text-xs text-muted-foreground">Sadece küçük harfler, rakamlar ve alt çizgi (_) kullanabilirsiniz</p>
               )}
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="fullName">Ad Soyad (İsteğe Bağlı)</Label>
               <Input 
@@ -180,7 +156,7 @@ export default function RegisterPage() {
                 disabled={isLoading}
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="password">Şifre</Label>
               <Input 
@@ -193,19 +169,14 @@ export default function RegisterPage() {
               />
             </div>
 
-            {/* KVKK Aydınlatma Metni */}
-            <div className="bg-muted/40 p-3 rounded-md text-xs text-muted-foreground space-y-2 mt-4">
-              <div className="flex items-start gap-2">
-                <Info className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                <p>
-                  Kişisel verileriniz, hesabınızı oluşturmak, hizmetlerimizi sunmak ve yasal yükümlülüklerimizi yerine getirmek amacıyla işlenmektedir. 
-                  Verileriniz, hizmet sağlayıcılarımız dışında üçüncü taraflarla paylaşılmamaktadır.
-                </p>
-              </div>
+            <div className="bg-muted/20 border border-border rounded-md p-3 text-sm flex items-start gap-3">
+              <Info className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+              <p className="text-muted-foreground text-xs">
+                Kişisel verileriniz, platform hizmetlerini sunmak, hesabınızı yönetmek ve yasal yükümlülükleri yerine getirmek amacıyla işlenmektedir. Detaylı bilgi için Gizlilik Politikamızı inceleyebilirsiniz.
+              </p>
             </div>
 
-            {/* KVKK Onay Kutuları */}
-            <div className="space-y-3 pt-2">
+            <div className="space-y-3 mt-4">
               <div className="flex items-start space-x-2">
                 <Checkbox 
                   id="terms" 
@@ -256,29 +227,18 @@ export default function RegisterPage() {
                     htmlFor="marketing"
                     className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                   >
-                    <span className="text-xs">
-                      Tanıtım ve pazarlama amaçlı e-posta almayı kabul ediyorum. (İsteğe bağlı)
+                    <span className="text-xs text-muted-foreground">
+                      Pazarlama ve tanıtım e-postaları almak istiyorum.
                     </span>
                   </label>
                 </div>
               </div>
             </div>
 
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {error && <p className="text-sm text-destructive mt-4">{error}</p>}
 
-            <Button 
-              type="submit" 
-              className="w-full flat-button" 
-              disabled={isLoading || !!usernameError || isCheckingUsername || !acceptTerms || !acceptPrivacy}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Kayıt yapılıyor...
-                </>
-              ) : (
-                "Kayıt Ol"
-              )}
+            <Button type="submit" className="w-full flat-button" disabled={isLoading || !isFormValid}>
+              {isLoading ? "Kayıt yapılıyor..." : "Kayıt Ol"}
             </Button>
           </form>
 
@@ -288,5 +248,26 @@ export default function RegisterPage() {
         </CardContent>
       </Card>
     </main>
+  );
+}
+
+// Yükleme durumu için fallback bileşeni
+function RegisterLoading() {
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="text-center">
+        <RefreshCw className="h-8 w-8 animate-spin mx-auto text-primary mb-4" />
+        <p className="text-muted-foreground">Yükleniyor...</p>
+      </div>
+    </div>
+  );
+}
+
+// Ana sayfa bileşeni
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<RegisterLoading />}>
+      <RegisterContent />
+    </Suspense>
   );
 }

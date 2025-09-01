@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/auth-provider";
+import { RefreshCw } from "lucide-react";
 
-export default function ResetPasswordPage() {
+// Ana içerik bileşeni
+function ResetPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { updateUserPassword } = useAuth();
@@ -77,4 +79,23 @@ export default function ResetPasswordPage() {
   );
 }
 
+// Yükleme durumu için fallback bileşeni
+function ResetPasswordLoading() {
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="text-center">
+        <RefreshCw className="h-8 w-8 animate-spin mx-auto text-primary mb-4" />
+        <p className="text-muted-foreground">Yükleniyor...</p>
+      </div>
+    </div>
+  );
+}
 
+// Ana sayfa bileşeni
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<ResetPasswordLoading />}>
+      <ResetPasswordContent />
+    </Suspense>
+  );
+}

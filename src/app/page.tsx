@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
 import { useStore } from "@/store/useStore";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -19,7 +19,8 @@ type CategorySection = {
   href: string;
 };
 
-export default function Home() {
+// Ana içerik bileşeni
+function HomeContent() {
   const [mounted, setMounted] = useState(false);
   const hasRequestedRef = useRef(false);
   
@@ -38,7 +39,9 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (mounted && !hasRequestedRef.current) {
+    if (!mounted) return;
+
+    if (!hasRequestedRef.current) {
       hasRequestedRef.current = true;
       fetchPlayers().catch(err => console.error("Fetch players error:", err));
     }
@@ -51,36 +54,40 @@ export default function Home() {
     }
   }, [players, fetchCurrentPlayersData]);
 
-  // Keşfet kategorileri
-  const categories: CategorySection[] = [
+  // Kategori bölümleri tanımları
+  const categorySections: CategorySection[] = [
     {
       title: "En Değerli Oyuncular",
-      description: "Piyasa değeri en yüksek olan oyuncular",
+      description: "En yüksek piyasa değerine sahip oyuncular",
       icon: Star,
-      color: "text-amber-600 dark:text-amber-400",
+      color: "text-amber-500",
       href: "/players?sort=market_value&order=desc",
-      getPlayers: (players, currentData) => {
+      getPlayers: (players) => {
         if (!players || !players.length) return [];
         try {
-          return [...players].sort((a, b) => b.market_value - a.market_value).slice(0, 3);
+          return [...players]
+            .sort((a, b) => b.market_value - a.market_value)
+            .slice(0, 3);
         } catch (e) {
-          console.error("Sorting error:", e);
+          console.error("Most valuable sorting error:", e);
           return [];
         }
       }
     },
     {
       title: "En Genç Yetenekler",
-      description: "Geleceğin yıldız adayları",
-      icon: Calendar,
-      color: "text-green-600 dark:text-green-400",
+      description: "Gelecek vadeden genç oyuncular",
+      icon: Star,
+      color: "text-emerald-500",
       href: "/players?sort=age&order=asc",
-      getPlayers: (players, currentData) => {
+      getPlayers: (players) => {
         if (!players || !players.length) return [];
         try {
-          return [...players].sort((a, b) => a.age - b.age).slice(0, 3);
+          return [...players]
+            .sort((a, b) => a.age - b.age)
+            .slice(0, 3);
         } catch (e) {
-          console.error("Age sorting error:", e);
+          console.error("Youngest sorting error:", e);
           return [];
         }
       }
@@ -89,12 +96,11 @@ export default function Home() {
       title: "Değeri En Çok Artanlar",
       description: "Piyasa değeri yükselen oyuncular",
       icon: TrendingUp,
-      color: "text-blue-600 dark:text-blue-400",
+      color: "text-green-500",
       href: "/players?sort=value_increase&order=desc",
       getPlayers: (players, currentData) => {
         if (!players || !players.length || !currentData) return [];
         try {
-          // Değer artışı olan oyuncuları bul ve yüzdesel artışa göre sırala
           const playersWithIncrease = players
             .filter(player => {
               const current = currentData[player.id];
@@ -124,7 +130,6 @@ export default function Home() {
       getPlayers: (players, currentData) => {
         if (!players || !players.length || !currentData) return [];
         try {
-          // Değer düşüşü olan oyuncuları bul ve yüzdesel düşüşe göre sırala
           const playersWithDecrease = players
             .filter(player => {
               const current = currentData[player.id];
@@ -132,10 +137,10 @@ export default function Home() {
             })
             .map(player => {
               const current = currentData[player.id];
-              const percentChange = ((current.market_value - player.market_value) / player.market_value) * 100;
+              const percentChange = ((player.market_value - current.market_value) / player.market_value) * 100;
               return { player, percentChange };
             })
-            .sort((a, b) => a.percentChange - b.percentChange)
+            .sort((a, b) => b.percentChange - a.percentChange)
             .map(item => item.player);
           
           return playersWithDecrease.slice(0, 3);
@@ -147,37 +152,27 @@ export default function Home() {
     },
     {
       title: "Son Eklenenler",
-      description: "En son takip etmeye başladığınız oyuncular",
-      icon: RefreshCw,
-      color: "text-purple-600 dark:text-purple-400",
-      href: "/players?sort=created_at&order=desc",
-      getPlayers: (players, currentData) => {
+      description: "En son eklenen oyuncular",
+      icon: Calendar,
+      color: "text-blue-500",
+      href: "/players?sort=player_id&order=desc",
+      getPlayers: (players) => {
         if (!players || !players.length) return [];
         try {
-          // created_at varsa ona göre sırala, yoksa normal sıralama
           return [...players]
             .sort((a, b) => {
-              if (a.created_at && b.created_at) {
-                return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-              }
-              return 0;
+              const aId = a.player_id || 0;
+              const bId = b.player_id || 0;
+              return bId - aId;
             })
             .slice(0, 3);
         } catch (e) {
-          console.error("Created date sorting error:", e);
+          console.error("Recent sorting error:", e);
           return [];
         }
       }
-    }
+    },
   ];
-
-  const handlePlayerDelete = async (id: number) => {
-    try {
-      await deletePlayer(id);
-    } catch (e) {
-      console.error("Delete player error:", e);
-    }
-  };
 
   if (!mounted) {
     return (
@@ -192,102 +187,189 @@ export default function Home() {
 
   if (error) {
     return (
-      <div className="p-4">
-        <div className="max-w-4xl mx-auto">
-          <Card className="flat-card">
-            <div className="p-6">
-              <div className="flex items-center gap-3">
-                <AlertCircle className="h-5 w-5 text-destructive" />
-                <div>
-                  <h3 className="font-medium text-destructive">Hata Oluştu</h3>
-                  <p className="text-sm mt-1 text-muted-foreground">{error}</p>
-                </div>
-              </div>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  hasRequestedRef.current = false;
-                  fetchPlayers();
-                }}
-                className="mt-3 flat-button"
-              >
-                Tekrar Dene
-              </Button>
+      <div className="container mx-auto p-4 lg:p-8">
+        <Card className="p-6">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="h-5 w-5 text-destructive" />
+            <div>
+              <h3 className="font-medium text-destructive">Hata Oluştu</h3>
+              <p className="text-sm mt-1 text-muted-foreground">{error}</p>
             </div>
-          </Card>
-        </div>
+          </div>
+          <Button
+            variant="outline"
+            onClick={fetchPlayers}
+            className="mt-3 flat-button"
+          >
+            Tekrar Dene
+          </Button>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-20">
-          <RefreshCw className="h-8 w-8 animate-spin text-primary mb-4" />
-          <p className="text-muted-foreground">Oyuncular yükleniyor...</p>
-        </div>
-      ) : !players || players.length === 0 ? (
-        <div className="max-w-md mx-auto text-center py-16">
-          <div className="bg-primary/10 inline-flex rounded-full p-3 mb-4">
-            <AlertCircle className="h-6 w-6 text-primary" />
+    <div className="container mx-auto p-4 lg:p-8">
+      <div className="flex flex-col gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-muted/20 rounded-lg p-6 border border-border">
+            <h1 className="text-2xl font-bold mb-2">Oyuncu Keşfi</h1>
+            <p className="text-muted-foreground mb-4">
+              Futbol dünyasının yıldızlarını takip edin ve değer değişimlerini izleyin.
+            </p>
+            <Button asChild className="flat-button">
+              <Link href="/players">
+                Tüm Oyuncuları Gör
+              </Link>
+            </Button>
           </div>
-          <h2 className="text-xl font-semibold mb-2">Henüz oyuncu eklenmemiş</h2>
-          <p className="text-muted-foreground mb-6">
-            Oyuncu ekleyerek takibinize başlayabilirsiniz.
-          </p>
-          <Button asChild className="flat-button">
-            <Link href="/players">Oyuncu Ekle</Link>
-          </Button>
+          
+          <div className="bg-muted/20 rounded-lg p-6 border border-border flex flex-col">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold">Oyuncu İstatistikleri</h2>
+              <Button
+                variant="outline"
+                onClick={fetchPlayers}
+                disabled={isLoading}
+                size="sm"
+                className="flat-button"
+              >
+                <RefreshCw
+                  className={`h-3.5 w-3.5 mr-1.5 ${isLoading ? "animate-spin" : ""}`}
+                />
+                <span>Yenile</span>
+              </Button>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4 flex-1">
+              <div className="bg-background/50 rounded p-4 flex flex-col">
+                <span className="text-muted-foreground text-xs mb-1">Toplam Oyuncu</span>
+                <span className="text-2xl font-bold">
+                  {isLoading ? (
+                    <RefreshCw className="h-4 w-4 animate-spin text-primary inline" />
+                  ) : (
+                    players?.length || 0
+                  )}
+                </span>
+              </div>
+              <div className="bg-background/50 rounded p-4 flex flex-col">
+                <span className="text-muted-foreground text-xs mb-1">Değeri Artan</span>
+                <span className="text-2xl font-bold text-green-600 dark:text-green-400">
+                  {isLoading ? (
+                    <RefreshCw className="h-4 w-4 animate-spin text-primary inline" />
+                  ) : (
+                    players?.filter(p => {
+                      const current = currentPlayersData?.[p.id];
+                      return current && current.market_value > p.market_value;
+                    }).length || 0
+                  )}
+                </span>
+              </div>
+              <div className="bg-background/50 rounded p-4 flex flex-col">
+                <span className="text-muted-foreground text-xs mb-1">Değeri Düşen</span>
+                <span className="text-2xl font-bold text-red-600 dark:text-red-400">
+                  {isLoading ? (
+                    <RefreshCw className="h-4 w-4 animate-spin text-primary inline" />
+                  ) : (
+                    players?.filter(p => {
+                      const current = currentPlayersData?.[p.id];
+                      return current && current.market_value < p.market_value;
+                    }).length || 0
+                  )}
+                </span>
+              </div>
+              <div className="bg-background/50 rounded p-4 flex flex-col">
+                <span className="text-muted-foreground text-xs mb-1">Değişmeyen</span>
+                <span className="text-2xl font-bold">
+                  {isLoading ? (
+                    <RefreshCw className="h-4 w-4 animate-spin text-primary inline" />
+                  ) : (
+                    players?.filter(p => {
+                      const current = currentPlayersData?.[p.id];
+                      return current && current.market_value === p.market_value;
+                    }).length || 0
+                  )}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
-      ) : (
-        <div className="space-y-12">
-          {categories.map(category => {
-            let categoryPlayers: Player[] = [];
-            
-            try {
-              categoryPlayers = category.getPlayers(players, currentPlayersData || {});
-            } catch (e) {
-              console.error(`Error in category ${category.title}:`, e);
-            }
-            
-            return (
-              <section key={category.title} className="border-b border-border pb-12 last:border-0">
-                <div className="flex justify-between items-center mb-4">
-                  <div className="flex items-center gap-2">
-                    <category.icon className={`h-5 w-5 ${category.color}`} />
-                    <h3 className="text-xl font-semibold">{category.title}</h3>
+        
+        {isLoading ? (
+          <div className="flex justify-center py-16">
+            <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : players && players.length > 0 ? (
+          <>
+            {categorySections.map((section, index) => {
+              const sectionPlayers = section.getPlayers(players, currentPlayersData || {});
+              
+              if (sectionPlayers.length === 0) return null;
+              
+              return (
+                <div key={index} className="mb-8">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <section.icon className={`h-5 w-5 ${section.color}`} />
+                      <h2 className="text-lg font-semibold">{section.title}</h2>
+                    </div>
+                    <Button asChild variant="ghost" size="sm" className="gap-1">
+                      <Link href={section.href}>
+                        <span className="text-xs">Tümünü Gör</span>
+                        <ChevronRight className="h-3.5 w-3.5" />
+                      </Link>
+                    </Button>
                   </div>
-                  <Button asChild variant="ghost" size="sm" className="gap-1">
-                    <Link href={category.href}>
-                      <span>Tümünü Gör</span>
-                      <ChevronRight className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                </div>
-                
-                <p className="text-sm text-muted-foreground mb-6">{category.description}</p>
-                
-                {categoryPlayers && categoryPlayers.length > 0 ? (
-                  <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
-                    {categoryPlayers.map((player) => (
-                      <div key={player.id} className="break-inside-avoid mb-6">
-                        <PlayerCard
-                          player={player}
-                          currentData={currentPlayersData?.[player.id]}
-                          onDelete={handlePlayerDelete}
-                        />
-                      </div>
+                  <p className="text-sm text-muted-foreground mb-4">{section.description}</p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {sectionPlayers.map((player) => (
+                      <PlayerCard 
+                        key={player.id} 
+                        player={player}
+                        currentData={currentPlayersData?.[player.id]}
+                        onDelete={deletePlayer}
+                      />
                     ))}
                   </div>
-                ) : (
-                  <p className="text-center py-8 text-muted-foreground">Bu kategoride oyuncu yok</p>
-                )}
-              </section>
-            );
-          })}
-        </div>
-      )}
+                </div>
+              );
+            })}
+          </>
+        ) : (
+          <div className="text-center py-16 bg-muted/20 rounded-lg">
+            <h3 className="text-xl font-semibold mb-2">Henüz Oyuncu Yok</h3>
+            <p className="text-muted-foreground mb-4">Oyuncu listenize henüz oyuncu eklenmemiş.</p>
+            <p className="text-sm mb-4">Oyuncuları "Tüm Oyuncular" sayfasından ekleyebilirsiniz.</p>
+            <Button asChild className="flat-button">
+              <Link href="/players">
+                Oyuncu Ekle
+              </Link>
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
+  );
+}
+
+// Yükleme durumu için fallback bileşeni
+function HomeLoading() {
+  return (
+    <div className="flex items-center justify-center py-20">
+      <div className="text-center">
+        <RefreshCw className="h-8 w-8 animate-spin mx-auto text-primary mb-4" />
+        <p className="text-muted-foreground">Yükleniyor...</p>
+      </div>
+    </div>
+  );
+}
+
+// Ana sayfa bileşeni
+export default function Home() {
+  return (
+    <Suspense fallback={<HomeLoading />}>
+      <HomeContent />
+    </Suspense>
   );
 }

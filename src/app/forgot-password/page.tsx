@@ -1,31 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/auth-provider";
+import { RefreshCw } from "lucide-react";
 
-export default function ForgotPasswordPage() {
+// Ana içerik bileşeni
+function ForgotPasswordContent() {
   const { resetPasswordForEmail } = useAuth();
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setMessage(null);
     setError(null);
+    if (!email) {
+      setError("E-posta adresinizi girin");
+      return;
+    }
+    setIsLoading(true);
     const { error } = await resetPasswordForEmail(email);
     setIsLoading(false);
     if (error) {
       setError(error.message);
       return;
     }
-    setMessage("Şifre sıfırlama bağlantısı e-postanıza gönderildi.");
+    setDone(true);
   };
 
   return (
@@ -33,7 +38,9 @@ export default function ForgotPasswordPage() {
       <Card className="flat-card w-full max-w-md">
         <CardContent className="p-6">
           <h1 className="text-xl font-semibold mb-1">Şifremi Unuttum</h1>
-          <p className="text-sm text-muted-foreground mb-6">E-postanı gir, sana bir sıfırlama bağlantısı gönderelim.</p>
+          <p className="text-sm text-muted-foreground mb-6">
+            E-posta adresinizi girin, şifre sıfırlama bağlantısı gönderelim
+          </p>
 
           <form onSubmit={onSubmit} className="space-y-4">
             <div className="space-y-2">
@@ -42,10 +49,10 @@ export default function ForgotPasswordPage() {
             </div>
 
             {error && <p className="text-sm text-destructive">{error}</p>}
-            {message && <p className="text-sm text-green-600 dark:text-green-400">{message}</p>}
+            {done && <p className="text-sm text-green-600 dark:text-green-400">Şifre sıfırlama bağlantısı gönderildi. Lütfen e-postanızı kontrol edin.</p>}
 
             <Button type="submit" className="w-full flat-button" disabled={isLoading}>
-              {isLoading ? "Gönderiliyor..." : "Bağlantı Gönder"}
+              {isLoading ? "Gönderiliyor..." : "Şifre Sıfırlama Bağlantısı Gönder"}
             </Button>
           </form>
         </CardContent>
@@ -54,4 +61,23 @@ export default function ForgotPasswordPage() {
   );
 }
 
+// Yükleme durumu için fallback bileşeni
+function ForgotPasswordLoading() {
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="text-center">
+        <RefreshCw className="h-8 w-8 animate-spin mx-auto text-primary mb-4" />
+        <p className="text-muted-foreground">Yükleniyor...</p>
+      </div>
+    </div>
+  );
+}
 
+// Ana sayfa bileşeni
+export default function ForgotPasswordPage() {
+  return (
+    <Suspense fallback={<ForgotPasswordLoading />}>
+      <ForgotPasswordContent />
+    </Suspense>
+  );
+}

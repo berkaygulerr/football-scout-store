@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useStore } from "@/store/useStore";
 import PlayerList from "@/components/PlayerList";
@@ -12,9 +12,10 @@ import { RefreshCw, AlertCircle, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import FilterInfo from "@/components/FilterInfo";
 
-export default function PlayersPage() {
-  const router = useRouter();
+// SearchParams kullanımı için ayrı bir bileşen
+function PlayersContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const hasRequestedRef = useRef(false);
   
@@ -190,5 +191,25 @@ export default function PlayersPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Fallback bileşeni
+function PlayersLoading() {
+  return (
+    <div className="flex items-center justify-center py-20">
+      <div className="text-center">
+        <RefreshCw className="h-8 w-8 animate-spin mx-auto text-primary mb-4" />
+        <p className="text-muted-foreground">Yükleniyor...</p>
+      </div>
+    </div>
+  );
+}
+
+export default function PlayersPage() {
+  return (
+    <Suspense fallback={<PlayersLoading />}>
+      <PlayersContent />
+    </Suspense>
   );
 }
