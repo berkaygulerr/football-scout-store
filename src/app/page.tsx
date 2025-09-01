@@ -340,7 +340,7 @@ function HomeContent() {
           <div className="text-center py-16 bg-muted/20 rounded-lg">
             <h3 className="text-xl font-semibold mb-2">Henüz Oyuncu Yok</h3>
             <p className="text-muted-foreground mb-4">Oyuncu listenize henüz oyuncu eklenmemiş.</p>
-            <p className="text-sm mb-4">Oyuncuları "Tüm Oyuncular" sayfasından ekleyebilirsiniz.</p>
+            <p className="text-sm mb-4">Oyuncuları &ldquo;Tüm Oyuncular&rdquo; sayfasından ekleyebilirsiniz.</p>
             <Button asChild className="flat-button">
               <Link href="/players">
                 Oyuncu Ekle
