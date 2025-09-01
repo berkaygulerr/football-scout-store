@@ -15,7 +15,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 // Ana içerik bileşeni
 function RegisterContent() {
   const router = useRouter();
-  const { signUpWithPassword, checkUsernameExists } = useAuth();
+  const { signUpWithPassword, signInWithPassword, checkUsernameExists } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
@@ -85,10 +85,12 @@ function RegisterContent() {
     }
 
     setIsLoading(true);
+    
+    // Kayıt işlemi
     const { error: signUpError } = await signUpWithPassword(email, password, username, fullName);
-    setIsLoading(false);
-
+    
     if (signUpError) {
+      setIsLoading(false);
       if (signUpError.message.includes("username")) {
         setUsernameError("Bu kullanıcı adı zaten alınmış.");
       } else {
@@ -96,8 +98,21 @@ function RegisterContent() {
       }
       return;
     }
-    alert("Kayıt başarılı! E-postanıza doğrulama bağlantısı gönderilmiş olabilir.");
-    router.push("/login");
+    
+    // Kayıt başarılıysa, otomatik giriş yap
+    const { error: signInError } = await signInWithPassword(email, password);
+    
+    setIsLoading(false);
+    
+    if (signInError) {
+      // Giriş başarısız olursa, login sayfasına yönlendir
+      alert("Kayıt başarılı! Ancak otomatik giriş yapılamadı. Lütfen giriş yapın.");
+      router.push("/login");
+      return;
+    }
+    
+    // Giriş başarılıysa, ana sayfaya yönlendir
+    router.push("/");
   };
 
   const isFormValid = email && password && username && !usernameError && !isCheckingUsername && acceptTerms && acceptPrivacy;
