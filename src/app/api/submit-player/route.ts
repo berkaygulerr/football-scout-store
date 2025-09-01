@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { playerSchema } from "@/types/player.types";
-import { supabase } from "@/lib/supabase";
+import { createServerSupabase } from "@/lib/supabase-server";
 import { redis } from "@/lib/redis";
 import { createApiResponse, createApiError, dynamicConfig } from "@/lib/api-utils";
 import { UI_MESSAGES } from "@/lib/constants";
@@ -9,6 +9,11 @@ export const { dynamic, revalidate } = dynamicConfig;
 
 export async function POST(request: NextRequest) {
   try {
+    const serverSupabase = createServerSupabase();
+    const { data: { session } } = await serverSupabase.auth.getSession();
+    if (!session?.user) {
+      return createApiError("Yetkisiz", 401);
+    }
     const body = await request.json();
     const parsed = playerSchema.safeParse(body);
 
@@ -19,9 +24,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { error } = await supabase
+    const { error } = await serverSupabase
       .from("players")
-      .insert([parsed.data]);
+      .insert([{ ...parsed.data, user_id: session.user.id }]);
 
     if (error) {
       console.error("Supabase error:", error);

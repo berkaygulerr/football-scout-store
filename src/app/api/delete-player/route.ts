@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { createServerSupabase } from "@/lib/supabase-server";
 import { redis } from "@/lib/redis";
 import { createApiResponse, createApiError, dynamicConfig } from "@/lib/api-utils";
 import { UI_MESSAGES } from "@/lib/constants";
@@ -7,6 +7,11 @@ export const { dynamic, revalidate } = dynamicConfig;
 
 export async function DELETE(request: Request) {
   try {
+    const serverSupabase = createServerSupabase();
+    const { data: { session } } = await serverSupabase.auth.getSession();
+    if (!session?.user) {
+      return createApiError("Yetkisiz", 401);
+    }
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
 
@@ -14,10 +19,11 @@ export async function DELETE(request: Request) {
       return createApiError("Geçersiz ID", 400);
     }
 
-    const { error } = await supabase
+    const { error } = await serverSupabase
       .from("players")
       .delete()
-      .eq("id", id);
+      .eq("id", id)
+      .eq("user_id", session.user.id);
 
     if (error) {
       console.error("Supabase error:", error);

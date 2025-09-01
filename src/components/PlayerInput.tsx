@@ -59,7 +59,7 @@ export default function PlayerInput({ onSelect, disabled, className }: PlayerInp
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Oyuncu adı girin..."
         disabled={disabled}
-        className="w-full bg-input text-foreground placeholder-muted-foreground rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-ring disabled:bg-muted disabled:cursor-not-allowed border-0 shadow-none"
+        className="w-full bg-input text-foreground placeholder-muted-foreground rounded px-4 py-2 focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-muted disabled:cursor-not-allowed border-0 shadow-none"
       />
       
       {isLoading && showResults && (

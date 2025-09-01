@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next';
 import { Inter, Poppins } from 'next/font/google';
 import "./global.css"
 import { ThemeProvider } from '@/contexts/theme-provider';
+import { AuthProvider } from '@/contexts/auth-provider';
+import Header from '@/components/Header';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -17,10 +19,10 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: 'Oyuncu Yönetimi',
+  title: 'ScoutGFUT',
   description: 'Futbol oyuncuları yönetim sistemi - Oyuncuları ekleyin, görüntüleyin ve yönetin',
-  keywords: ['futbol', 'oyuncu', 'yönetim', 'football', 'player management'],
-  authors: [{ name: 'Oyuncu Yönetimi' }],
+  keywords: ['futbol', 'oyuncu', 'yönetim', 'football', 'player management', 'scout'],
+  authors: [{ name: 'ScoutGFUT' }],
 }
 
 export const viewport: Viewport = {
@@ -42,7 +44,14 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <AuthProvider>
+            <div className="min-h-screen bg-background flex flex-col">
+              <Header />
+              <div className="flex-1">
+                {children}
+              </div>
+            </div>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

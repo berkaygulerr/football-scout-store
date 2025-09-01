@@ -17,6 +17,7 @@ export interface Player extends BasePlayer {
   age: number;
   market_value: number;
   player_id?: number;
+  created_at?: string;
 }
 
 /**

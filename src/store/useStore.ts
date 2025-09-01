@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { Player } from '@/types/player.types';
+import { Player, CurrentPlayerData } from '@/types/player.types';
 import { PlayerService } from '@/services/player.service';
 import { handleApiError } from '@/lib/api-utils';
 
@@ -10,7 +10,7 @@ interface FilterOptions {
   teamFilter: string;
   ageRange: [number, number];
   marketValueRange: [number, number];
-  sortBy: 'name' | 'age' | 'market_value' | 'team' | 'player_id';
+  sortBy: 'name' | 'age' | 'market_value' | 'team' | 'player_id' | 'created_at' | 'value_increase';
   sortOrder: 'asc' | 'desc';
 }
 
@@ -66,16 +66,34 @@ const defaultFilters: FilterOptions = {
   sortOrder: 'desc',
 };
 
-const getSortValue = (player: Player, sortBy: FilterOptions['sortBy']): string | number => {
+// Değer değişim yüzdesini hesapla
+const calculateValueChange = (player: Player, currentData: Record<string, Player>): number => {
+  const current = currentData[player.id];
+  
+  // Güncel veri yoksa değişim yok
+  if (!current) return 0;
+  
+  // Başlangıç değeri 0 ise değişim hesaplanamaz
+  if (player.market_value === 0) return 0;
+  
+  // Değer değişim yüzdesi
+  return ((current.market_value - player.market_value) / player.market_value) * 100;
+};
+
+const getSortValue = (player: Player, currentData: Record<string, Player>, sortBy: FilterOptions['sortBy']): string | number => {
   switch (sortBy) {
     case 'name':
     case 'team':
-      return player[sortBy].toLowerCase();
+      return player[sortBy]?.toLowerCase() || '';
     case 'age':
     case 'market_value':
-      return player[sortBy];
+      return player[sortBy] || 0;
     case 'player_id':
       return player.player_id || 0;
+    case 'created_at':
+      return player.created_at ? new Date(player.created_at).getTime() : 0;
+    case 'value_increase':
+      return calculateValueChange(player, currentData);
     default:
       return 0;
   }
@@ -109,36 +127,40 @@ export const useStore = create<AppStore>()(
         try {
           const data = await PlayerService.getCurrentPlayersData(ids);
           const dataMap: Record<string, Player> = {};
-          data.forEach(({ id, data: playerData }) => {
-            if (playerData) dataMap[id] = playerData;
+          
+          data.forEach(item => {
+            if (item.data && item.id) {
+              dataMap[item.id] = item.data;
+            }
           });
+          
           set({ currentPlayersData: dataMap });
         } catch (error) {
-          console.error('Current players data fetch failed:', error);
+          console.error('Error fetching current players data:', error);
         }
       },
 
       addPlayer: async (player: Player) => {
-        set({ error: null });
+        set({ isLoading: true, error: null });
         try {
           await PlayerService.createPlayer(player);
-          get().fetchPlayers();
+          // Yeni oyuncu eklendikten sonra listeyi güncelle
+          const data = await PlayerService.getPlayers();
+          set({ players: data, isLoading: false });
         } catch (error) {
-          const errorMessage = handleApiError(error);
-          set({ error: errorMessage });
-          throw new Error(errorMessage);
+          set({ error: handleApiError(error), isLoading: false });
         }
       },
 
       deletePlayer: async (id: number) => {
-        set({ error: null });
+        set({ isLoading: true, error: null });
         try {
           await PlayerService.deletePlayer(id);
-          get().fetchPlayers();
+          // Oyuncu silindikten sonra listeyi güncelle
+          const data = await PlayerService.getPlayers();
+          set({ players: data, isLoading: false });
         } catch (error) {
-          const errorMessage = handleApiError(error);
-          set({ error: errorMessage });
-          throw new Error(errorMessage);
+          set({ error: handleApiError(error), isLoading: false });
         }
       },
 
@@ -146,28 +168,28 @@ export const useStore = create<AppStore>()(
       setSearchQuery: (query: string) => {
         set((state) => ({
           filters: { ...state.filters, searchQuery: query },
-          currentPage: 1
+          currentPage: 1,
         }));
       },
 
       setTeamFilter: (team: string) => {
         set((state) => ({
           filters: { ...state.filters, teamFilter: team },
-          currentPage: 1
+          currentPage: 1,
         }));
       },
 
       setAgeRange: (range: [number, number]) => {
         set((state) => ({
           filters: { ...state.filters, ageRange: range },
-          currentPage: 1
+          currentPage: 1,
         }));
       },
 
       setMarketValueRange: (range: [number, number]) => {
         set((state) => ({
           filters: { ...state.filters, marketValueRange: range },
-          currentPage: 1
+          currentPage: 1,
         }));
       },
 
@@ -196,18 +218,20 @@ export const useStore = create<AppStore>()(
 
       // Computed State
       getFilteredPlayers: () => {
-        const { players, filters } = get();
+        const { players, filters, currentPlayersData } = get();
+        
+        if (!players || players.length === 0) return [];
         
         const filtered = players.filter(player => {
           if (filters.searchQuery) {
             const query = filters.searchQuery.toLowerCase();
-            const matches = player.name.toLowerCase().includes(query) ||
-                          player.team.toLowerCase().includes(query);
+            const matches = player.name?.toLowerCase().includes(query) ||
+                          player.team?.toLowerCase().includes(query);
             if (!matches) return false;
           }
 
           if (filters.teamFilter && filters.teamFilter !== 'all') {
-            if (player.team.toLowerCase() !== filters.teamFilter.toLowerCase()) {
+            if (player.team?.toLowerCase() !== filters.teamFilter.toLowerCase()) {
               return false;
             }
           }
@@ -224,14 +248,32 @@ export const useStore = create<AppStore>()(
           return true;
         });
 
-        return filtered.sort((a, b) => {
-          const aValue = getSortValue(a, filters.sortBy);
-          const bValue = getSortValue(b, filters.sortBy);
+        // Özel sıralama mantığı - Değer değişimi için
+        if (filters.sortBy === 'value_increase') {
+          // Değer değişimine göre sıralama
+          return filtered.sort((a, b) => {
+            const aValue = calculateValueChange(a, currentPlayersData);
+            const bValue = calculateValueChange(b, currentPlayersData);
 
-          if (aValue < bValue) return filters.sortOrder === 'asc' ? -1 : 1;
-          if (aValue > bValue) return filters.sortOrder === 'asc' ? 1 : -1;
-          return 0;
-        });
+            if (filters.sortOrder === 'desc') {
+              // "Değeri Artanlardan Düşenlere"
+              return bValue - aValue;
+            } else {
+              // "Değeri Düşenlerden Artanlara"
+              return aValue - bValue;
+            }
+          });
+        } else {
+          // Normal sıralama mantığı
+          return filtered.sort((a, b) => {
+            const aValue = getSortValue(a, currentPlayersData, filters.sortBy);
+            const bValue = getSortValue(b, currentPlayersData, filters.sortBy);
+
+            if (aValue < bValue) return filters.sortOrder === 'asc' ? -1 : 1;
+            if (aValue > bValue) return filters.sortOrder === 'asc' ? 1 : -1;
+            return 0;
+          });
+        }
       },
 
       getPaginatedPlayers: () => {
@@ -249,16 +291,21 @@ export const useStore = create<AppStore>()(
 
       getUniqueTeams: () => {
         const { players } = get();
-        const teams = Array.from(new Set(players.map(player => player.team)));
+        if (!players || players.length === 0) return [];
+        const teams = Array.from(new Set(players.filter(p => p.team).map(player => player.team)));
         return teams.sort();
       },
 
       getTeamsWithCount: () => {
         const { players } = get();
+        if (!players || players.length === 0) return [];
+        
         const teamCounts: Record<string, number> = {};
         
         players.forEach(player => {
-          teamCounts[player.team] = (teamCounts[player.team] || 0) + 1;
+          if (player.team) {
+            teamCounts[player.team] = (teamCounts[player.team] || 0) + 1;
+          }
         });
         
         return Object.entries(teamCounts)
@@ -268,4 +315,4 @@ export const useStore = create<AppStore>()(
     }),
     { name: 'app-store' }
   )
-); 
+);
