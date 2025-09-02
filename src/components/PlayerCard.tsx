@@ -47,21 +47,25 @@ export default function PlayerCard({
 
   const displayData = currentData || player;
   const valueChange = currentData ? currentData.market_value - player.market_value : 0;
-  const valueChangePercent = player.market_value 
-    ? Math.round((valueChange / player.market_value) * 100) 
-    : 0;
+  // Değer değişimi bilgileri
+  const isNewValue = player.market_value === 0 && valueChange > 0;
+  const valueChangePercent = isNewValue
+    ? "Yeni" // Başlangıç değeri 0 ise ve değişim varsa "Yeni" göster
+    : player.market_value > 0
+      ? Math.abs(Math.round((valueChange / player.market_value) * 100))
+      : 0;
 
   const randomColorClass = AVATAR_COLORS[player.name.length % AVATAR_COLORS.length];
 
   return (
-    <Card className="flat-card overflow-hidden">
-      <CardContent className="p-4 space-y-4">
+    <Card className="flat-card overflow-hidden mb-4 w-full">
+      <CardContent className="p-5 space-y-4">
         <div className="flex items-start gap-3">
           <div className="flex-shrink-0">
             <div
-              className={`flex items-center justify-center h-12 w-12 rounded-md bg-gradient-to-br ${randomColorClass}`}
+              className={`flex items-center justify-center h-14 w-14 rounded-lg bg-gradient-to-br ${randomColorClass} shadow-sm`}
             >
-              <span className="text-white font-semibold text-lg">
+              <span className="text-white font-bold text-xl">
                 {player.name.charAt(0).toUpperCase()}
               </span>
             </div>
@@ -70,7 +74,7 @@ export default function PlayerCard({
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-1">
               <h3
-                className="font-semibold text-sm leading-tight"
+                className="font-semibold text-base leading-tight font-heading"
                 title={player.name}
               >
                 {player.name}
@@ -85,16 +89,16 @@ export default function PlayerCard({
 
             {hasChanges && currentData && currentData.team !== player.team ? (
               <div className="flex flex-wrap items-center gap-1 mb-1">
-                <Badge variant="outline" className="text-xs px-1.5 py-0 text-muted-foreground">
+                <Badge variant="outline" className="text-xs text-muted-foreground">
                   {player.team}
                 </Badge>
                 <ChevronRight className="h-3 w-3 text-muted-foreground" />
-                <Badge variant="secondary" className="text-xs px-1.5 py-0 font-medium">
+                <Badge variant="secondary" className="text-xs font-medium">
                   {currentData.team}
                 </Badge>
               </div>
             ) : (
-              <Badge variant="secondary" className="text-xs flat-button mb-1">
+              <Badge variant="secondary" className="text-xs flat-button mb-1 px-2 py-0.5">
                 {displayData.team}
               </Badge>
             )}
@@ -112,7 +116,7 @@ export default function PlayerCard({
 
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Yaş</span>
+            <span className="text-sm font-medium text-muted-foreground font-display">Yaş</span>
             <div className="text-right">
               {hasChanges && currentData && currentData.age !== player.age ? (
                 <div className="flex items-center justify-end gap-1">
@@ -120,16 +124,16 @@ export default function PlayerCard({
                     {player.age}
                   </Badge>
                   <ChevronRight className="h-3 w-3 text-muted-foreground" />
-                  <span className="text-lg font-semibold">{displayData.age}</span>
+                  <span className="text-lg font-semibold tabular-nums">{displayData.age}</span>
                 </div>
               ) : (
-                <span className="text-lg font-semibold">{displayData.age}</span>
+                <span className="text-lg font-semibold tabular-nums">{displayData.age}</span>
               )}
             </div>
           </div>
 
           <div className="flex items-start justify-between">
-            <span className="text-sm text-muted-foreground">Piyasa Değeri</span>
+            <span className="text-sm font-medium text-muted-foreground font-display">Piyasa Değeri</span>
             <div className="text-right">
               {hasChanges &&
                 currentData &&
@@ -139,12 +143,12 @@ export default function PlayerCard({
                     €{formatNumber(player.market_value)}
                   </Badge>
                   <ChevronRight className="h-3 w-3 text-muted-foreground" />
-                  <span className="text-lg font-bold text-amber-700 dark:text-primary">
+                  <span className="text-lg font-bold text-amber-700 dark:text-primary tabular-nums">
                     €{formatNumber(displayData.market_value)}
                   </span>
                 </div>
               ) : (
-                <div className="text-lg font-bold text-amber-700 dark:text-primary">
+                <div className="text-lg font-bold text-amber-700 dark:text-primary tabular-nums">
                   €{formatNumber(displayData.market_value)}
                 </div>
               )}
@@ -153,21 +157,25 @@ export default function PlayerCard({
                 currentData &&
                 currentData.market_value !== player.market_value && (
                   <div
-                    className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm font-medium mt-1 ${
+                    className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md font-medium mt-2 ${
                       valueChange > 0
-                        ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                        : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                        ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
+                        : "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400"
                     }`}
                   >
-                    {valueChange > 0 ? (
-                      <TrendingUp className="h-3 w-3" />
-                    ) : (
-                      <TrendingDown className="h-3 w-3" />
-                    )}
-                    <span>
-                      {valueChange > 0 ? "+" : ""}€
-                      {formatNumber(Math.abs(valueChange))} ({valueChangePercent}%)
+                    <span className="text-sm font-bold tabular-nums">
+                      {valueChange > 0 ? "+" : "-"}€{formatNumber(Math.abs(valueChange))}
                     </span>
+                    <span className={`${valueChange > 0 ? "text-green-600/40 dark:text-green-400/40" : "text-red-600/40 dark:text-red-400/40"}`}>|</span>
+                    {typeof valueChangePercent === "string" ? (
+                      <span className="text-sm font-medium tabular-nums">
+                        {valueChangePercent}
+                      </span>
+                    ) : (
+                      <span className="text-sm font-medium tabular-nums">
+                        {valueChangePercent}%
+                      </span>
+                    )}
                   </div>
                 )}
             </div>

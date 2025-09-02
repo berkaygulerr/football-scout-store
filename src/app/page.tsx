@@ -4,8 +4,9 @@ import { useEffect, useRef, useState, Suspense } from "react";
 import { useStore } from "@/store/useStore";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { RefreshCw, AlertCircle, TrendingUp, TrendingDown, Calendar, Star, ChevronRight } from "lucide-react";
+import { RefreshCw, AlertCircle, TrendingUp, TrendingDown, Calendar, Star, ChevronRight, ArrowRightLeft } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Player } from "@/types/player.types";
 import PlayerCard from "@/components/PlayerCard";
 
@@ -23,6 +24,7 @@ type CategorySection = {
 function HomeContent() {
   const [mounted, setMounted] = useState(false);
   const hasRequestedRef = useRef(false);
+  const router = useRouter();
   
   const { 
     players,
@@ -32,6 +34,9 @@ function HomeContent() {
     fetchPlayers,
     fetchCurrentPlayersData,
     deletePlayer,
+    setSorting,
+    setShowTransfers,
+    resetFilters,
   } = useStore();
   
   useEffect(() => {
@@ -54,50 +59,38 @@ function HomeContent() {
     }
   }, [players, fetchCurrentPlayersData]);
 
+  // Kategori butonları için filtreleme fonksiyonu
+  const handleCategoryClick = (section: CategorySection) => {
+    // Önce filtreleri temizle
+    resetFilters();
+    
+    // Kategoriye göre filtreleme yap
+    if (section.title === "Değeri En Çok Artanlar") {
+      setSorting('value_increase', 'desc');
+    } else if (section.title === "Transfer Olanlar") {
+      setShowTransfers(true);
+    } else if (section.title === "En Değerli Oyuncular") {
+      setSorting('market_value', 'desc');
+    } else if (section.title === "En Genç Yetenekler") {
+      setSorting('age', 'asc');
+    } else if (section.title === "Değeri En Çok Düşenler") {
+      setSorting('value_increase', 'asc');
+    } else if (section.title === "Son Eklenenler") {
+      setSorting('player_id', 'desc');
+    }
+    
+    // Players sayfasına yönlendir
+    router.push('/players');
+  };
+
   // Kategori bölümleri tanımları
   const categorySections: CategorySection[] = [
-    {
-      title: "En Değerli Oyuncular",
-      description: "En yüksek piyasa değerine sahip oyuncular",
-      icon: Star,
-      color: "text-amber-500",
-      href: "/players?sort=market_value&order=desc",
-      getPlayers: (players) => {
-        if (!players || !players.length) return [];
-        try {
-          return [...players]
-            .sort((a, b) => b.market_value - a.market_value)
-            .slice(0, 3);
-        } catch (e) {
-          console.error("Most valuable sorting error:", e);
-          return [];
-        }
-      }
-    },
-    {
-      title: "En Genç Yetenekler",
-      description: "Gelecek vadeden genç oyuncular",
-      icon: Star,
-      color: "text-emerald-500",
-      href: "/players?sort=age&order=asc",
-      getPlayers: (players) => {
-        if (!players || !players.length) return [];
-        try {
-          return [...players]
-            .sort((a, b) => a.age - b.age)
-            .slice(0, 3);
-        } catch (e) {
-          console.error("Youngest sorting error:", e);
-          return [];
-        }
-      }
-    },
     {
       title: "Değeri En Çok Artanlar",
       description: "Piyasa değeri yükselen oyuncular",
       icon: TrendingUp,
       color: "text-green-500",
-      href: "/players?sort=value_increase&order=desc",
+      href: "/players",
       getPlayers: (players, currentData) => {
         if (!players || !players.length || !currentData) return [];
         try {
@@ -122,11 +115,75 @@ function HomeContent() {
       }
     },
     {
+      title: "Transfer Olanlar",
+      description: "Takımı değişen oyuncular",
+      icon: ArrowRightLeft,
+      color: "text-purple-500",
+      href: "/players",
+      getPlayers: (players, currentData) => {
+        if (!players || !players.length || !currentData) return [];
+        try {
+          const transferredPlayers = players
+            .filter(player => {
+              const current = currentData[player.id];
+              return current && current.team !== player.team;
+            })
+            .sort((a, b) => {
+              // En son transfer olanlar önce
+              const aId = a.player_id || 0;
+              const bId = b.player_id || 0;
+              return bId - aId;
+            });
+          
+          return transferredPlayers.slice(0, 3);
+        } catch (e) {
+          console.error("Transferred players sorting error:", e);
+          return [];
+        }
+      }
+    },
+    {
+      title: "En Değerli Oyuncular",
+      description: "En yüksek piyasa değerine sahip oyuncular",
+      icon: Star,
+      color: "text-amber-500",
+      href: "/players",
+      getPlayers: (players) => {
+        if (!players || !players.length) return [];
+        try {
+          return [...players]
+            .sort((a, b) => b.market_value - a.market_value)
+            .slice(0, 3);
+        } catch (e) {
+          console.error("Most valuable sorting error:", e);
+          return [];
+        }
+      }
+    },
+    {
+      title: "En Genç Yetenekler",
+      description: "Gelecek vadeden genç oyuncular",
+      icon: Star,
+      color: "text-emerald-500",
+      href: "/players",
+      getPlayers: (players) => {
+        if (!players || !players.length) return [];
+        try {
+          return [...players]
+            .sort((a, b) => a.age - b.age)
+            .slice(0, 3);
+        } catch (e) {
+          console.error("Youngest sorting error:", e);
+          return [];
+        }
+      }
+    },
+    {
       title: "Değeri En Çok Düşenler",
       description: "Piyasa değeri düşen oyuncular",
       icon: TrendingDown,
       color: "text-red-600 dark:text-red-400",
-      href: "/players?sort=value_increase&order=asc",
+      href: "/players",
       getPlayers: (players, currentData) => {
         if (!players || !players.length || !currentData) return [];
         try {
@@ -155,7 +212,7 @@ function HomeContent() {
       description: "En son eklenen oyuncular",
       icon: Calendar,
       color: "text-blue-500",
-      href: "/players?sort=player_id&order=desc",
+      href: "/players",
       getPlayers: (players) => {
         if (!players || !players.length) return [];
         try {
@@ -241,8 +298,8 @@ function HomeContent() {
               </Button>
             </div>
             
-            <div className="grid grid-cols-2 gap-4 flex-1">
-              <div className="bg-background/50 rounded p-4 flex flex-col">
+            <div className="grid grid-cols-2 gap-3 flex-1">
+              <div className="bg-background/50 rounded p-3 flex flex-col">
                 <span className="text-muted-foreground text-xs mb-1">Toplam Oyuncu</span>
                 <span className="text-2xl font-bold">
                   {isLoading ? (
@@ -252,7 +309,7 @@ function HomeContent() {
                   )}
                 </span>
               </div>
-              <div className="bg-background/50 rounded p-4 flex flex-col">
+              <div className="bg-background/50 rounded p-3 flex flex-col">
                 <span className="text-muted-foreground text-xs mb-1">Değeri Artan</span>
                 <span className="text-2xl font-bold text-green-600 dark:text-green-400">
                   {isLoading ? (
@@ -265,7 +322,7 @@ function HomeContent() {
                   )}
                 </span>
               </div>
-              <div className="bg-background/50 rounded p-4 flex flex-col">
+              <div className="bg-background/50 rounded p-3 flex flex-col">
                 <span className="text-muted-foreground text-xs mb-1">Değeri Düşen</span>
                 <span className="text-2xl font-bold text-red-600 dark:text-red-400">
                   {isLoading ? (
@@ -278,7 +335,7 @@ function HomeContent() {
                   )}
                 </span>
               </div>
-              <div className="bg-background/50 rounded p-4 flex flex-col">
+              <div className="bg-background/50 rounded p-3 flex flex-col">
                 <span className="text-muted-foreground text-xs mb-1">Değişmeyen</span>
                 <span className="text-2xl font-bold">
                   {isLoading ? (
@@ -313,16 +370,19 @@ function HomeContent() {
                       <section.icon className={`h-5 w-5 ${section.color}`} />
                       <h2 className="text-lg font-semibold">{section.title}</h2>
                     </div>
-                    <Button asChild variant="ghost" size="sm" className="gap-1">
-                      <Link href={section.href}>
-                        <span className="text-xs">Tümünü Gör</span>
-                        <ChevronRight className="h-3.5 w-3.5" />
-                      </Link>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="gap-1"
+                      onClick={() => handleCategoryClick(section)}
+                    >
+                      <span className="text-xs">Tümünü Gör</span>
+                      <ChevronRight className="h-3.5 w-3.5" />
                     </Button>
                   </div>
                   <p className="text-sm text-muted-foreground mb-4">{section.description}</p>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="columns-1 md:columns-2 lg:columns-3 gap-4 space-y-4">
                     {sectionPlayers.map((player) => (
                       <PlayerCard 
                         key={player.id} 

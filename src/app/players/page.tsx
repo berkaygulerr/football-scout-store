@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+
 import { useStore } from "@/store/useStore";
 import PlayerList from "@/components/PlayerList";
 import SidePanel from "@/components/SidePanel";
@@ -14,8 +14,6 @@ import FilterInfo from "@/components/FilterInfo";
 
 // SearchParams kullanımı için ayrı bir bileşen
 function PlayersContent() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const hasRequestedRef = useRef(false);
   
@@ -32,6 +30,7 @@ function PlayersContent() {
     setSearchQuery,
     setSorting,
     setAgeRange,
+
   } = useStore();
 
   const filteredPlayers = getFilteredPlayers();
@@ -41,38 +40,7 @@ function PlayersContent() {
     setMounted(true);
   }, []);
 
-  // URL parametrelerini işle
-  useEffect(() => {
-    if (!mounted) return;
-    
-    // Sıralama parametreleri
-    const sort = searchParams.get('sort');
-    const order = searchParams.get('order');
-    
-    // Kategori parametresi
-    const category = searchParams.get('category');
-    
-    if (category === 'value_increase') {
-      // Değer artışı kategorisi için özel sıralama
-      setSorting('value_increase', 'desc');
-    } else if (sort) {
-      // Normal sıralama parametreleri
-      const validSortFields = ['name', 'age', 'market_value', 'team', 'player_id', 'created_at', 'value_increase'];
-      if (validSortFields.includes(sort)) {
-        setSorting(sort as any, (order === 'asc' ? 'asc' : 'desc'));
-      }
-    }
-
-    // Yaş filtresi
-    const minAge = searchParams.get('min_age');
-    const maxAge = searchParams.get('max_age');
-    if (minAge || maxAge) {
-      const min = minAge ? parseInt(minAge, 10) : 15;
-      const max = maxAge ? parseInt(maxAge, 10) : 50;
-      setAgeRange([min, max]);
-    }
-    
-  }, [mounted, searchParams, setSorting, setAgeRange, setSearchQuery]);
+  // URL parametreleri kaldırıldı - sadece manuel filtreleme
 
   useEffect(() => {
     if (!mounted) return;
@@ -163,7 +131,7 @@ function PlayersContent() {
         </Button>
       </div>
 
-      <div className="container mx-auto p-4 lg:p-8">
+      <div className="container mx-auto p-4 lg:p-8 max-w-full">
         <div className="flex flex-col lg:flex-row gap-6">
           <SidePanel onPlayerAdded={handlePlayerAdded} />
           <div className="flex-1">

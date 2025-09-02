@@ -34,9 +34,8 @@ function ForgotPasswordContent() {
   };
 
   return (
-    <main className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="flat-card w-full max-w-md">
-        <CardContent className="p-6">
+    <Card className="flat-card w-full">
+      <CardContent className="p-6">
           <h1 className="text-xl font-semibold mb-1">Şifremi Unuttum</h1>
           <p className="text-sm text-muted-foreground mb-6">
             E-posta adresinizi girin, şifre sıfırlama bağlantısı gönderelim
@@ -55,20 +54,17 @@ function ForgotPasswordContent() {
               {isLoading ? "Gönderiliyor..." : "Şifre Sıfırlama Bağlantısı Gönder"}
             </Button>
           </form>
-        </CardContent>
-      </Card>
-    </main>
+      </CardContent>
+    </Card>
   );
 }
 
 // Yükleme durumu için fallback bileşeni
 function ForgotPasswordLoading() {
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="text-center">
-        <RefreshCw className="h-8 w-8 animate-spin mx-auto text-primary mb-4" />
-        <p className="text-muted-foreground">Yükleniyor...</p>
-      </div>
+    <div className="text-center">
+      <RefreshCw className="h-8 w-8 animate-spin mx-auto text-primary mb-4" />
+      <p className="text-muted-foreground">Yükleniyor...</p>
     </div>
   );
 }

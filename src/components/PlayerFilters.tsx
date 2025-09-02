@@ -6,7 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Label } from './ui/label';
 import { Badge } from './ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Switch } from './ui/switch';
 import { Filter } from 'lucide-react';
+
 
 const getSortLabel = (sortBy: string, sortOrder: 'asc' | 'desc'): string => {
   const labels = {
@@ -30,14 +32,20 @@ export default function PlayerFilters() {
     setTeamFilter,
     setAgeRange,
     setMarketValueRange,
+    setShowTransfers,
     setSorting,
     resetFilters,
     getFilteredPlayers,
     getTeamsWithCount,
+    currentPlayersData,
   } = useStore();
 
   const filteredPlayers = getFilteredPlayers();
   const teamsWithCount = getTeamsWithCount();
+
+
+
+
 
   const handleAgeRangeChange = (type: 'min' | 'max', value: string) => {
     const numValue = Number(value);
@@ -205,6 +213,28 @@ export default function PlayerFilters() {
         </div>
 
         <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="show-transfers" className="text-sm font-medium cursor-pointer">
+              Sadece Transfer Olanlar
+            </Label>
+            <Switch
+              id="show-transfers"
+              checked={filters.showTransfers}
+              onCheckedChange={setShowTransfers}
+            />
+          </div>
+          
+          {filters.showTransfers && (
+            <div className="rounded-md bg-purple-50 dark:bg-purple-900/20 p-2 text-xs text-purple-700 dark:text-purple-300">
+              <p>Takımı değişen {players?.filter(p => {
+                const current = currentPlayersData?.[p.id];
+                return current && current.team !== p.team;
+              }).length || 0} oyuncu görüntüleniyor.</p>
+            </div>
+          )}
+        </div>
+        
+        <div className="space-y-4">
           <Label className="text-sm font-medium">
             Sıralama
           </Label>
@@ -225,7 +255,7 @@ export default function PlayerFilters() {
                   <SelectItem value="name">İsim</SelectItem>
                   <SelectItem value="age">Yaş</SelectItem>
                   <SelectItem value="team">Takım</SelectItem>
-                  <SelectItem value="market_value">Market Değeri</SelectItem>
+                  <SelectItem value="market_value">Piyasa Değeri</SelectItem>
                   <SelectItem value="value_increase">Değer Değişimi</SelectItem>
                 </SelectContent>
               </Select>

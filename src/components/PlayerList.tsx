@@ -47,9 +47,9 @@ export default function PlayerList({
 
   return (
     <>
-      <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
+      <div className="columns-1 md:columns-2 lg:columns-3 gap-4 space-y-4">
         {players.map((player: Player) => (
-          <div key={player.id} className="break-inside-avoid mb-6">
+          <div key={player.id} className="break-inside-avoid mb-4">
             <PlayerCard
               player={player}
               currentData={currentPlayersData[player.id]}

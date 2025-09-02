@@ -62,6 +62,16 @@ export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
 
+  // Auth sayfalarında navbar'ı gizle
+  const isAuthPage = pathname?.startsWith('/login') || 
+                     pathname?.startsWith('/register') || 
+                     pathname?.startsWith('/forgot-password') || 
+                     pathname?.startsWith('/reset-password');
+  
+  if (isAuthPage) {
+    return null;
+  }
+
   const handleRefresh = () => {
     hasRequestedRef.current = false;
     fetchPlayers();

@@ -10,6 +10,7 @@ interface FilterOptions {
   teamFilter: string;
   ageRange: [number, number];
   marketValueRange: [number, number];
+  showTransfers: boolean;
   sortBy: 'name' | 'age' | 'market_value' | 'team' | 'player_id' | 'created_at' | 'value_increase';
   sortOrder: 'asc' | 'desc';
 }
@@ -40,6 +41,7 @@ interface AppStore {
   setTeamFilter: (team: string) => void;
   setAgeRange: (range: [number, number]) => void;
   setMarketValueRange: (range: [number, number]) => void;
+  setShowTransfers: (show: boolean) => void;
   setSorting: (sortBy: FilterOptions['sortBy'], sortOrder: FilterOptions['sortOrder']) => void;
   resetFilters: () => void;
 
@@ -62,6 +64,7 @@ const defaultFilters: FilterOptions = {
   teamFilter: '',
   ageRange: [15, 50],
   marketValueRange: [0, Number.MAX_SAFE_INTEGER], // Sonsuz değer için MAX_SAFE_INTEGER kullanıldı
+  showTransfers: false,
   sortBy: 'player_id',
   sortOrder: 'desc',
 };
@@ -193,6 +196,13 @@ export const useStore = create<AppStore>()(
         }));
       },
 
+      setShowTransfers: (show: boolean) => {
+        set((state) => ({
+          filters: { ...state.filters, showTransfers: show },
+          currentPage: 1,
+        }));
+      },
+
       setSorting: (sortBy: FilterOptions['sortBy'], sortOrder: FilterOptions['sortOrder']) => {
         set((state) => ({
           filters: { ...state.filters, sortBy, sortOrder }
@@ -200,7 +210,7 @@ export const useStore = create<AppStore>()(
       },
 
       resetFilters: () => {
-        set({ filters: defaultFilters, currentPage: 1 });
+        set({ filters: {...defaultFilters}, currentPage: 1 });
       },
 
       // Pagination Actions
@@ -221,6 +231,19 @@ export const useStore = create<AppStore>()(
         const { players, filters, currentPlayersData } = get();
         
         if (!players || players.length === 0) return [];
+        
+        // Transfer olanlar kategorisi için özel filtre
+        if (filters.showTransfers) {
+          return players.filter(player => {
+            const current = currentPlayersData[player.id];
+            return current && current.team !== player.team;
+          }).sort((a, b) => {
+            // En son transfer olanlar önce
+            const aId = a.player_id || 0;
+            const bId = b.player_id || 0;
+            return bId - aId;
+          });
+        }
         
         const filtered = players.filter(player => {
           if (filters.searchQuery) {
@@ -248,32 +271,15 @@ export const useStore = create<AppStore>()(
           return true;
         });
 
-        // Özel sıralama mantığı - Değer değişimi için
-        if (filters.sortBy === 'value_increase') {
-          // Değer değişimine göre sıralama
-          return filtered.sort((a, b) => {
-            const aValue = calculateValueChange(a, currentPlayersData);
-            const bValue = calculateValueChange(b, currentPlayersData);
+        // Sıralama mantığı
+        return filtered.sort((a, b) => {
+          const aValue = getSortValue(a, currentPlayersData, filters.sortBy);
+          const bValue = getSortValue(b, currentPlayersData, filters.sortBy);
 
-            if (filters.sortOrder === 'desc') {
-              // "Değeri Artanlardan Düşenlere"
-              return bValue - aValue;
-            } else {
-              // "Değeri Düşenlerden Artanlara"
-              return aValue - bValue;
-            }
-          });
-        } else {
-          // Normal sıralama mantığı
-          return filtered.sort((a, b) => {
-            const aValue = getSortValue(a, currentPlayersData, filters.sortBy);
-            const bValue = getSortValue(b, currentPlayersData, filters.sortBy);
-
-            if (aValue < bValue) return filters.sortOrder === 'asc' ? -1 : 1;
-            if (aValue > bValue) return filters.sortOrder === 'asc' ? 1 : -1;
-            return 0;
-          });
-        }
+          if (aValue < bValue) return filters.sortOrder === 'asc' ? -1 : 1;
+          if (aValue > bValue) return filters.sortOrder === 'asc' ? 1 : -1;
+          return 0;
+        });
       },
 
       getPaginatedPlayers: () => {

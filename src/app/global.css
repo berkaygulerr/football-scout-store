@@ -66,11 +66,11 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-background text-foreground font-sans text-[15px];
   }
   
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-heading);
+    @apply font-heading font-semibold tracking-tight;
   }
 }
 
@@ -124,3 +124,4 @@
     transform: translateY(0);
   }
 }
+

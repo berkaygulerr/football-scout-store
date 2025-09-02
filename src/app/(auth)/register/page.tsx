@@ -118,9 +118,8 @@ function RegisterContent() {
   const isFormValid = email && password && username && !usernameError && !isCheckingUsername && acceptTerms && acceptPrivacy;
 
   return (
-    <main className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="flat-card w-full max-w-md">
-        <CardContent className="p-6">
+    <Card className="flat-card w-full">
+      <CardContent className="p-6">
           <h1 className="text-xl font-semibold mb-1">Kayıt Ol</h1>
           <p className="text-sm text-muted-foreground mb-6">Yeni hesap oluşturun</p>
 
@@ -260,20 +259,17 @@ function RegisterContent() {
           <p className="text-xs text-muted-foreground mt-6 text-center">
             Zaten hesabınız var mı? <Link href="/login" className="text-primary hover:underline">Giriş yap</Link>
           </p>
-        </CardContent>
-      </Card>
-    </main>
+      </CardContent>
+    </Card>
   );
 }
 
 // Yükleme durumu için fallback bileşeni
 function RegisterLoading() {
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="text-center">
-        <RefreshCw className="h-8 w-8 animate-spin mx-auto text-primary mb-4" />
-        <p className="text-muted-foreground">Yükleniyor...</p>
-      </div>
+    <div className="text-center">
+      <RefreshCw className="h-8 w-8 animate-spin mx-auto text-primary mb-4" />
+      <p className="text-muted-foreground">Yükleniyor...</p>
     </div>
   );
 }

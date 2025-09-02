@@ -71,7 +71,7 @@ export default function SidePanel({ onPlayerAdded }: SidePanelProps) {
         </div>
       </div>
 
-      <div className="hidden lg:block space-y-6">
+      <div className="hidden lg:block space-y-4">
         <AddPlayerForm onPlayerAdded={onPlayerAdded} />
         <PlayerFilters />
       </div>

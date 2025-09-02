@@ -8,6 +8,11 @@ const config: Config = {
   ],
   darkMode: 'class',
   theme: {
+    fontFamily: {
+      sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
+      heading: ['var(--font-heading)', 'var(--font-inter)', 'system-ui', 'sans-serif'],
+      display: ['var(--font-poppins)', 'var(--font-inter)', 'system-ui', 'sans-serif'],
+    },
     extend: {
       colors: {
         background: 'hsl(var(--background))',
