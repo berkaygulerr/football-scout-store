@@ -8,7 +8,7 @@ import { PlayerListWithItems } from "@/types/list.types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ArrowLeft, Share2, Edit, Trash2, Users, Calendar, Eye, EyeOff, Heart } from "lucide-react";
 import { formatDate } from "@/utils/formatDate";
 import { toast } from "sonner";
@@ -27,6 +27,7 @@ export default function ListDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [playerToDelete, setPlayerToDelete] = useState<{ id: number; name: string } | null>(null);
+  const [listDeleteModalOpen, setListDeleteModalOpen] = useState(false);
   const [likeStatus, setLikeStatus] = useState<LikeStatus>({ isLiked: false, likeCount: 0 });
   const [isLiking, setIsLiking] = useState(false);
 
@@ -34,6 +35,11 @@ export default function ListDetailPage() {
   
   const { removePlayerFromList, fetchCurrentPlayersData, currentPlayersData: storeCurrentData } = useStore();
   const listId = params.id as string;
+
+  // Tarayıcı geri butonu gibi davran
+  const handleGoBack = () => {
+    router.back();
+  };
 
   const fetchListData = useCallback(async () => {
     if (!listId) return;
@@ -172,6 +178,47 @@ export default function ListDetailPage() {
       });
       
       toast.error("Oyuncu silinirken hata oluştu");
+    }
+  };
+
+  const handleDeleteList = () => {
+    setListDeleteModalOpen(true);
+  };
+
+  const confirmDeleteList = async () => {
+    if (!list || !user) return;
+
+    try {
+      const supabase = createBrowserSupabaseClient();
+
+      // Listeyi sil
+      const { error } = await supabase
+        .from('player_lists')
+        .delete()
+        .eq('id', list.id)
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Liste silme hatası:', error);
+        toast.error("Liste silinirken hata oluştu");
+        return;
+      }
+
+      toast.success("Liste başarıyla silindi");
+      setListDeleteModalOpen(false);
+      
+      // Profil sayfasına yönlendir
+      setTimeout(() => {
+        if (list.user_profile) {
+          router.push(`/profile/${list.user_profile.username}`);
+        } else {
+          router.push("/");
+        }
+      }, 100);
+
+    } catch (error) {
+      console.error('Liste silme hatası:', error);
+      toast.error("Bir hata oluştu");
     }
   };
 
@@ -338,10 +385,10 @@ export default function ListDetailPage() {
           <div className="text-center">
             <h3 className="text-lg font-semibold text-destructive mb-2">Hata</h3>
             <p className="text-muted-foreground mb-4">{error}</p>
-            <Button onClick={() => router.back()} variant="outline">
+                        <Button onClick={handleGoBack} variant="outline">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Geri Dön
-              </Button>
+            </Button>
           </div>
           </Card>
         </div>
@@ -355,7 +402,7 @@ export default function ListDetailPage() {
           <div className="text-center">
             <h3 className="text-lg font-semibold mb-2">Liste Bulunamadı</h3>
             <p className="text-muted-foreground mb-4">Aradığınız liste mevcut değil.</p>
-            <Button onClick={() => router.back()} variant="outline">
+            <Button onClick={handleGoBack} variant="outline">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Geri Dön
             </Button>
@@ -376,7 +423,7 @@ export default function ListDetailPage() {
           <div className="flex items-center gap-4 min-w-0 flex-1">
             <Button
               variant="ghost"
-              onClick={() => router.back()}
+              onClick={handleGoBack}
               className="gap-2 p-2 h-auto hover:bg-muted/50 flex-shrink-0"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -399,11 +446,14 @@ export default function ListDetailPage() {
                 <span className="hidden sm:inline">
                   {likeStatus.isLiked ? 'Beğenildi' : 'Beğen'}
                 </span>
-                {likeStatus.likeCount > 0 && (
-                  <span className="ml-1 text-xs">({likeStatus.likeCount})</span>
-                )}
               </Button>
             )}
+
+            {/* Like sayısını herkese göster */}
+            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+              <Heart className="h-4 w-4" />
+              <span>{likeStatus.likeCount}</span>
+            </div>
 
             <Button
               variant="outline"
@@ -427,6 +477,7 @@ export default function ListDetailPage() {
                   variant="outline" 
                   size="sm" 
                   className="gap-1 sm:gap-2 text-destructive hover:text-destructive hover:bg-destructive/10 hover:border-destructive/50"
+                  onClick={handleDeleteList}
                 >
                   <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                   <span className="hidden sm:inline">Sil</span>
@@ -504,9 +555,35 @@ export default function ListDetailPage() {
                 Bu listeye henüz oyuncu eklenmemiş.
               </p>
               {isOwner && (
-                <p className="text-sm text-muted-foreground">
-                  Aşağıdaki &ldquo;Oyuncu Ekle&rdquo; butonunu kullanarak oyuncu ekleyebilirsiniz.
-                </p>
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Aşağıdaki &ldquo;Oyuncu Ekle&rdquo; butonunu kullanarak oyuncu ekleyebilirsiniz.
+                  </p>
+                  <AddPlayerToList 
+                    listId={list.id} 
+                    onPlayerAdded={(newPlayer) => {
+                      // Optimistic update: Yeni oyuncuyu hemen listeye ekle
+                      if (newPlayer && list) {
+                        const newItem = {
+                          id: `temp-${Date.now()}`, // Geçici ID
+                          list_id: list.id,
+                          player_id: newPlayer.player_id,
+                          added_at: new Date().toISOString(),
+                          notes: "",
+                          player: newPlayer
+                        };
+                        
+                        setList(prev => prev ? {
+                          ...prev,
+                          items: [newItem, ...prev.items]
+                        } : null);
+                        
+                        toast.success("Oyuncu listeye eklendi");
+                      }
+                    }}
+                    existingPlayerIds={[]}
+                  />
+                </div>
               )}
             </div>
             </Card>
@@ -517,8 +594,8 @@ export default function ListDetailPage() {
               <h2 className="text-xl font-semibold">Oyuncular ({list.items.length})</h2>
               {isOwner && (
                 <AddPlayerToList 
-                  listId={list.id} 
-                  onPlayerAdded={(newPlayer) => {
+                    listId={list.id} 
+                    onPlayerAdded={(newPlayer) => {
                     // Optimistic update: Yeni oyuncuyu hemen listeye ekle
                     if (newPlayer && list) {
                       const newItem = {
@@ -538,9 +615,9 @@ export default function ListDetailPage() {
                       // Fallback: Listeyi yenile
                       fetchListData();
                     }
-                  }}
-                  existingPlayerIds={list.items.map(item => item.player?.player_id).filter(Boolean) as number[]}
-                />
+                                      }}
+                    existingPlayerIds={list.items.map(item => item.player?.player_id).filter(Boolean) as number[]}
+                  />
               )}
             </div>
             
@@ -594,6 +671,32 @@ export default function ListDetailPage() {
             <Button
               variant="destructive"
               onClick={confirmDeletePlayer}
+            >
+              Sil
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* List Delete Confirmation Modal */}
+      <Dialog open={listDeleteModalOpen} onOpenChange={setListDeleteModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Listeyi Sil</DialogTitle>
+            <DialogDescription>
+              Bu listeyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setListDeleteModalOpen(false)}
+            >
+              İptal
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDeleteList}
             >
               Sil
             </Button>

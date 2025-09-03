@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { 
   Calendar, 
   Users, 
@@ -22,7 +23,8 @@ import {
   Edit,
   Plus,
   Globe,
-  Lock
+  Lock,
+  Trash2
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-provider";
 import { formatDate } from "@/utils/formatDate";
@@ -37,11 +39,62 @@ export default function UserProfilePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState({ total_likes: 0, lists_count: 0 });
+  
+  // Delete modal state
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [listToDelete, setListToDelete] = useState<{ id: string; title: string } | null>(null);
 
   const username = params.username as string;
   
   // Takip sistemi
   const { followStatus, actionLoading, toggleFollow } = useFollow(profile?.user_id || '');
+
+  // Liste silme fonksiyonu
+  const handleDeleteList = (listId: string, listTitle: string) => {
+    setListToDelete({ id: listId, title: listTitle });
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDeleteList = async () => {
+    if (!listToDelete || !user) return;
+
+    try {
+      const supabase = createBrowserSupabaseClient();
+
+      const { error } = await supabase
+        .from('player_lists')
+        .delete()
+        .eq('id', listToDelete.id)
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Delete list error:', error);
+        toast.error("Liste silinirken hata oluştu");
+        return;
+      }
+
+      toast.success("Liste başarıyla silindi");
+      
+      // Modal'ı kapat
+      setDeleteModalOpen(false);
+      setListToDelete(null);
+      
+      // State'i güncelle - silinen listeyi kaldır
+      if (profile) {
+        setProfile(prev => ({
+          ...prev!,
+          lists: prev!.lists?.filter(list => list.id !== listToDelete.id),
+          stats: {
+            ...prev!.stats,
+            lists_count: prev!.stats.lists_count - 1
+          }
+        }));
+      }
+    } catch (error) {
+      console.error('Delete list error:', error);
+      toast.error("Bir hata oluştu");
+    }
+  };
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -84,11 +137,22 @@ export default function UserProfilePage() {
            console.error('Lists fetch error:', listsError);
          }
 
-         // Liste öğe sayılarını hesapla
-         const listsWithCounts = listsData?.map(list => ({
-           ...list,
-           items_count: list.list_items?.length || 0
-         })) || [];
+         // Liste öğe sayılarını ve beğeni sayılarını hesapla
+         const listsWithCounts = await Promise.all(
+           (listsData || []).map(async (list) => {
+             // Beğeni sayısını al
+             const { count: likeCount } = await supabase
+               .from('list_likes')
+               .select('*', { count: 'exact', head: true })
+               .eq('list_id', list.id);
+
+             return {
+               ...list,
+               items_count: list.list_items?.length || 0,
+               like_count: likeCount || 0
+             };
+           })
+         );
 
          // Filtreleme: kendi profilinde tüm listeler, başka profillerde sadece herkese açık
          const filteredLists = isOwnProfile 
@@ -387,7 +451,7 @@ export default function UserProfilePage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Listeler ({profile.stats.lists_count})</CardTitle>
-              {profile.is_own_profile && (
+              {profile.is_own_profile && profile.stats.lists_count > 0 && (
                 <Button size="sm" asChild>
                   <Link href="/lists/create">
                     <Plus className="h-4 w-4 mr-2" />
@@ -447,6 +511,10 @@ export default function UserProfilePage() {
                               {list.items_count || 0} oyuncu
                             </div>
                             <div className="flex items-center gap-1">
+                              <Heart className="h-3 w-3" />
+                              {list.like_count || 0} beğeni
+                            </div>
+                            <div className="flex items-center gap-1">
                               <Calendar className="h-3 w-3" />
                               {formatDate(list.created_at)}
                             </div>
@@ -455,16 +523,29 @@ export default function UserProfilePage() {
                         
                         <div className="flex gap-2 ml-4">
                           {profile.is_own_profile && (
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              asChild
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <Link href={`/lists/${list.id}/edit`}>
-                                <Edit className="h-3 w-3" />
-                              </Link>
-                            </Button>
+                            <>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                asChild
+                              >
+                                <Link href={`/lists/${list.id}/edit`}>
+                                  <Edit className="h-3 w-3" />
+                                </Link>
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleDeleteList(list.id, list.title);
+                                }}
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10 hover:border-destructive/50"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </>
                           )}
                         </div>
                       </div>
@@ -476,6 +557,35 @@ export default function UserProfilePage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Listeyi Sil</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-muted-foreground">
+              <span className="font-medium">"{listToDelete?.title}"</span> listesini silmek istediğinizden emin misiniz?
+            </p>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteModalOpen(false)}
+            >
+              İptal
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDeleteList}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Sil
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -80,5 +80,6 @@ export interface UserProfilePage extends UserProfile {
     created_at: string;
     updated_at: string;
     items_count: number;
+    like_count: number;
   }>;
 }

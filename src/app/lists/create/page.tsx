@@ -87,7 +87,7 @@ export default function CreateListPage() {
       toast.success("Liste başarıyla oluşturuldu");
       
       // Liste detay sayfasına yönlendir
-      router.push(`/lists/${data.id}`);
+      router.replace(`/lists/${data.id}`);
 
     } catch (error) {
       console.error('Create list error:', error);

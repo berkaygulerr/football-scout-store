@@ -10,10 +10,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ArrowLeft, Save, Trash2 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-provider";
 import { toast } from "sonner";
-import Link from "next/link";
 
 export default function EditListPage() {
   const params = useParams();
@@ -21,12 +21,14 @@ export default function EditListPage() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [formData, setFormData] = useState<UpdateListSchema>({
     title: "",
     description: "",
     is_public: true
   });
   const [error, setError] = useState<string | null>(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   const listId = params.id as string;
 
@@ -134,7 +136,7 @@ export default function EditListPage() {
       toast.success("Liste başarıyla güncellendi");
       
       // Liste detay sayfasına yönlendir
-      router.push(`/lists/${listId}`);
+      router.back();
 
     } catch (error) {
       console.error('Update list error:', error);
@@ -144,15 +146,15 @@ export default function EditListPage() {
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
     if (!user) return;
 
-    if (!confirm("Bu listeyi silmek istediğinizden emin misiniz?")) {
-      return;
-    }
-
     try {
-      setSaving(true);
+      setDeleting(true);
       const supabase = createBrowserSupabaseClient();
 
       const { error } = await supabase
@@ -168,13 +170,28 @@ export default function EditListPage() {
       }
 
       toast.success("Liste başarıyla silindi");
+      setDeleteModalOpen(false);
+      
+      // Profil sayfasından geldiyse profil sayfasına dön
+      if (typeof window !== 'undefined') {
+        const referrer = document.referrer;
+        if (referrer.includes('/profile/')) {
+          const profileMatch = referrer.match(/\/profile\/([^\/]+)/);
+          if (profileMatch) {
+            router.push(`/profile/${profileMatch[1]}`);
+            return;
+          }
+        }
+      }
+      
+      // Fallback: Ana sayfaya git
       router.push("/");
 
     } catch (error) {
       console.error('Delete list error:', error);
       toast.error("Bir hata oluştu");
     } finally {
-      setSaving(false);
+      setDeleting(false);
     }
   };
 
@@ -214,10 +231,12 @@ export default function EditListPage() {
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
-          <Button variant="ghost" size="icon" asChild>
-            <Link href={`/lists/${listId}`}>
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => router.back()}
+          >
+            <ArrowLeft className="h-4 w-4" />
           </Button>
           <h1 className="text-2xl font-bold">Liste Düzenle</h1>
         </div>
@@ -282,13 +301,18 @@ export default function EditListPage() {
                   <Save className="h-4 w-4 mr-2" />
                   {saving ? "Kaydediliyor..." : "Değişiklikleri Kaydet"}
                 </Button>
-                <Button variant="outline" asChild>
-                  <Link href={`/lists/${listId}`}>İptal</Link>
+                <Button 
+                  type="button"
+                  variant="outline" 
+                  onClick={() => router.back()}
+                >
+                  İptal
                 </Button>
                 <Button 
+                  type="button"
                   variant="destructive" 
                   onClick={handleDelete}
-                  disabled={saving}
+                  disabled={saving || deleting}
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
                   Listeyi Sil
@@ -298,6 +322,33 @@ export default function EditListPage() {
           </CardContent>
         </Card>
       </div>
+      
+      {/* Delete Confirmation Modal */}
+      <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Listeyi Sil</DialogTitle>
+            <DialogDescription>
+              Bu listeyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteModalOpen(false)}
+            >
+              İptal
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={deleting}
+            >
+              {deleting ? "Siliniyor..." : "Sil"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
