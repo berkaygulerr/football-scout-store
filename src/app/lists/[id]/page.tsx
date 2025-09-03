@@ -569,7 +569,7 @@ export default function ListDetailPage() {
                           list_id: list.id,
                           player_id: newPlayer.player_id,
                           added_at: new Date().toISOString(),
-                          notes: "",
+                          notes: newPlayer.notes || null,
                           player: newPlayer
                         };
                         
