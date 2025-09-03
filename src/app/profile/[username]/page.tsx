@@ -566,7 +566,7 @@ export default function UserProfilePage() {
           </DialogHeader>
           <div className="py-4">
             <p className="text-sm text-muted-foreground">
-              <span className="font-medium">"{listToDelete?.title}"</span> listesini silmek istediğinizden emin misiniz?
+              <span className="font-medium">&ldquo;{listToDelete?.title}&rdquo;</span> listesini silmek istediğinizden emin misiniz?
             </p>
           </div>
           <DialogFooter>

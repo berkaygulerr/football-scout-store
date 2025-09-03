@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { ArrowLeft, Save, Trash2 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-provider";
 import { toast } from "sonner";
+import Link from "next/link";
 
 export default function EditListPage() {
   const params = useParams();
