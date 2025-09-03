@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/auth-provider";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -42,7 +43,13 @@ export default function UserFollowersPage() {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!user) {
+      // User henüz yüklenmemişse bekle
+      if (user === null) {
+        return;
+      }
+      
+      // User yüklendi ama giriş yapmamışsa login'e yönlendir
+      if (user === false) {
         router.push('/login');
         return;
       }
@@ -65,6 +72,7 @@ export default function UserFollowersPage() {
         if (response.ok) {
           const data = await response.json();
           if (data.success) {
+    
             setFollowers(data.data);
           } else {
             setError("Takipçiler yüklenirken hata oluştu");
@@ -241,7 +249,9 @@ export default function UserFollowersPage() {
                     </Avatar>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold">{follower.full_name || follower.username}</h3>
+                        <Link href={`/profile/${follower.username}`} className="hover:underline">
+                          <h3 className="font-semibold">{follower.full_name || follower.username}</h3>
+                        </Link>
                         <Badge variant="secondary" className="text-xs">
                           @{follower.username}
                         </Badge>
@@ -265,6 +275,7 @@ export default function UserFollowersPage() {
                   
                   {user && follower.user_id !== user.id && (
                     <div className="flex gap-2">
+
                       {follower.is_following ? (
                         <Button
                           variant="outline"

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/auth-provider";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -25,6 +26,7 @@ interface FollowingUser {
   avatar_url: string;
   bio: string;
   followed_at: string;
+  is_following?: boolean;
 }
 
 export default function UserFollowingPage() {
@@ -36,12 +38,19 @@ export default function UserFollowingPage() {
   const [following, setFollowing] = useState<FollowingUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [followingLoading, setFollowingLoading] = useState<string | null>(null);
   const [unfollowing, setUnfollowing] = useState<string | null>(null);
   const [profileUser, setProfileUser] = useState<any>(null);
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!user) {
+      // User henüz yüklenmemişse bekle
+      if (user === null) {
+        return;
+      }
+      
+      // User yüklendi ama giriş yapmamışsa login'e yönlendir
+      if (user === false) {
         router.push('/login');
         return;
       }
@@ -64,6 +73,7 @@ export default function UserFollowingPage() {
         if (response.ok) {
           const data = await response.json();
           if (data.success) {
+    
             setFollowing(data.data);
           } else {
             setError("Takip edilenler yüklenirken hata oluştu");
@@ -81,6 +91,49 @@ export default function UserFollowingPage() {
 
     fetchData();
   }, [user, router, username]);
+
+  const handleFollow = async (userId: string, username: string) => {
+    try {
+      setFollowingLoading(userId);
+      console.log('Attempting to follow:', { userId, username });
+      
+      const response = await fetch('/api/follow', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          target_user_id: userId,
+          action: 'follow'
+        }),
+      });
+
+      console.log('Follow response status:', response.status);
+      const data = await response.json();
+      console.log('Follow response data:', data);
+
+      if (response.ok) {
+        if (data.success) {
+          toast.success(`${username} kullanıcısını takip etmeye başladınız`);
+          // Takip edilenler listesini güncelle
+          setFollowing(prev => prev.map(user => 
+            user.user_id === userId 
+              ? { ...user, is_following: true }
+              : user
+          ));
+        } else {
+          toast.error(data.error || "Takip işlemi başarısız");
+        }
+      } else {
+        toast.error(data.error || "Takip işlemi başarısız");
+      }
+    } catch (err) {
+      console.error('Follow error:', err);
+      toast.error("Bir hata oluştu");
+    } finally {
+      setFollowingLoading(null);
+    }
+  };
 
   const handleUnfollow = async (userId: string, username: string) => {
     try {
@@ -185,33 +238,35 @@ export default function UserFollowingPage() {
         </Card>
       ) : (
         <div className="space-y-4">
-          {following.map((user) => (
-            <Card key={user.user_id} className="hover:bg-muted/50 transition-colors">
+          {following.map((followedUser) => (
+            <Card key={followedUser.user_id} className="hover:bg-muted/50 transition-colors">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Avatar className="h-12 w-12">
-                      <AvatarImage src={user.avatar_url} alt={user.username} />
+                      <AvatarImage src={followedUser.avatar_url} alt={followedUser.username} />
                       <AvatarFallback>
-                        {user.full_name?.charAt(0) || user.username.charAt(0).toUpperCase()}
+                        {followedUser.full_name?.charAt(0) || followedUser.username.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold">{user.full_name || user.username}</h3>
+                        <Link href={`/profile/${followedUser.username}`} className="hover:underline">
+                          <h3 className="font-semibold">{followedUser.full_name || followedUser.username}</h3>
+                        </Link>
                         <Badge variant="secondary" className="text-xs">
-                          @{user.username}
+                          @{followedUser.username}
                         </Badge>
                       </div>
-                      {user.bio && (
+                      {followedUser.bio && (
                         <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
-                          {user.bio}
+                          {followedUser.bio}
                         </p>
                       )}
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
                         <Calendar className="h-3 w-3" />
                         <span>
-                          {formatDistanceToNow(new Date(user.followed_at), { 
+                          {formatDistanceToNow(new Date(followedUser.followed_at), { 
                             addSuffix: true, 
                             locale: tr 
                           })} takip etmeye başladı
@@ -220,18 +275,30 @@ export default function UserFollowingPage() {
                     </div>
                   </div>
                   
-                  {user && user.user_id !== user.user_id && (
+                  {user && user.id !== followedUser.user_id && (
                     <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleUnfollow(user.user_id, user.username)}
-                        disabled={unfollowing === user.user_id}
-                        className="gap-2"
-                      >
-                        <UserMinus className="h-4 w-4" />
-                        {unfollowing === user.user_id ? "İşleniyor..." : "Takibi Bırak"}
-                      </Button>
+                      {followedUser.is_following ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleUnfollow(followedUser.user_id, followedUser.username)}
+                          disabled={unfollowing === followedUser.user_id}
+                          className="gap-2"
+                        >
+                          <UserMinus className="h-4 w-4" />
+                          {unfollowing === followedUser.user_id ? "İşleniyor..." : "Takibi Bırak"}
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          onClick={() => handleFollow(followedUser.user_id, followedUser.username)}
+                          disabled={followingLoading === followedUser.user_id}
+                          className="gap-2"
+                        >
+                          <UserPlus className="h-4 w-4" />
+                          {followingLoading === followedUser.user_id ? "İşleniyor..." : "Takip Et"}
+                        </Button>
+                      )}
                     </div>
                   )}
                 </div>

@@ -46,6 +46,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch profile data' }, { status: 500 });
     }
 
+    // Mevcut kullanıcının takip durumunu kontrol et
+    const { data: currentUserFollows, error: followError } = await supabase
+      .from('user_follows')
+      .select('following_id')
+      .eq('follower_id', user.id);
+
+    const currentUserFollowingIds = currentUserFollows?.map(item => item.following_id) || [];
+
     // Veriyi birleştir
     const followers = followersData.map(item => {
       const profile = profileData?.find(p => p.user_id === item.follower_id);
@@ -55,7 +63,8 @@ export async function GET(request: NextRequest) {
         full_name: profile?.full_name || '',
         avatar_url: profile?.avatar_url || '',
         bio: profile?.bio || '',
-        followed_at: item.created_at
+        followed_at: item.created_at,
+        is_following: currentUserFollowingIds.includes(item.follower_id)
       };
     });
 

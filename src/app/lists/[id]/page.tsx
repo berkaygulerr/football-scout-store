@@ -53,9 +53,9 @@ export default function ListDetailPage() {
         .single();
 
       if (listError || !listData) {
-        setError("Liste bulunamadı");
+          setError("Liste bulunamadı");
         return;
-      }
+        }
 
       // 2. Özel liste kontrolü
       if (!listData.is_public && (!user || listData.user_id !== user.id)) {
@@ -262,8 +262,8 @@ export default function ListDetailPage() {
   const handleShare = async () => {
     const url = window.location.href;
     try {
-      await navigator.clipboard.writeText(url);
-      toast.success("Liste linki kopyalandı");
+        await navigator.clipboard.writeText(url);
+        toast.success("Liste linki kopyalandı");
     } catch (error) {
       toast.error("Link kopyalanamadı");
     }
@@ -376,10 +376,10 @@ export default function ListDetailPage() {
             <Button onClick={() => router.back()} variant="outline">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Geri Dön
-            </Button>
+              </Button>
           </div>
-        </Card>
-      </div>
+          </Card>
+        </div>
     );
   }
 
@@ -456,8 +456,8 @@ export default function ListDetailPage() {
                   <Link href={`/lists/${listId}/edit`}>
                     <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
                     <span className="hidden sm:inline">Düzenle</span>
-                  </Link>
-                </Button>
+            </Link>
+          </Button>
                 <Button 
                   variant="outline" 
                   size="sm" 
@@ -475,14 +475,14 @@ export default function ListDetailPage() {
         <Card>
           <CardContent className="p-6">
             <div className="space-y-4">
-              {/* Liste Sahibi */}
-              {list.user_profile && (
+                     {/* Liste Sahibi */}
+                     {list.user_profile && (
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
                     <span className="text-xs font-medium text-primary">
                       {list.user_profile.username.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
+                         </span>
+                       </div>
                   <Link 
                     href={`/profile/${list.user_profile.username}`}
                     className="text-sm font-medium text-foreground hover:text-primary transition-colors"
@@ -501,27 +501,27 @@ export default function ListDetailPage() {
               <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                 
                 <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4" />
+                        <Users className="h-4 w-4" />
                   <span>{list.items.length} oyuncu</span>
-                </div>
+                      </div>
                 
                 <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
+                        <Calendar className="h-4 w-4" />
                   <span>{formatDate(list.created_at)} tarihinde oluşturuldu</span>
-                </div>
+                      </div>
                 
                 <div className="flex items-center gap-2">
-                  {list.is_public ? (
-                    <>
+                        {list.is_public ? (
+                          <>
                       <Eye className="h-4 w-4" />
                       <span>Herkese açık</span>
-                    </>
-                  ) : (
-                    <>
+                          </>
+                        ) : (
+                          <>
                       <EyeOff className="h-4 w-4" />
                       <span>Özel</span>
-                    </>
-                  )}
+                          </>
+                        )}
                 </div>
               </div>
               
@@ -535,7 +535,7 @@ export default function ListDetailPage() {
             <div className="text-center">
               <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold mb-2">Henüz Oyuncu Yok</h3>
-              <p className="text-muted-foreground mb-4">
+                <p className="text-muted-foreground mb-4">
                 Bu listeye henüz oyuncu eklenmemiş.
               </p>
               {isOwner && (
@@ -544,8 +544,8 @@ export default function ListDetailPage() {
                 </p>
               )}
             </div>
-          </Card>
-        ) : (
+            </Card>
+          ) : (
           <div className="space-y-4">
             {/* Oyuncu Listesi Header */}
             <div className="flex items-center justify-between">
@@ -574,20 +574,20 @@ export default function ListDetailPage() {
                 
                 return (
                   <div key={item.id} className="break-inside-avoid mb-4">
-                    <PlayerCard
-                      player={item.player!}
-                      currentData={currentData}
+                  <PlayerCard
+                    player={item.player!}
+                    currentData={currentData}
                       onDelete={isOwner ? (id: number) => handleRemovePlayer(item.player?.player_id || id) : undefined}
                       notes={item.notes}
                       onUpdateNotes={isOwner ? handleUpdateNotes : undefined}
                       canEdit={isOwner}
-                    />
+                  />
                   </div>
                 );
               })}
             </div>
-          </div>
-        )}
+            </div>
+          )}
         </div>
       </div>
 
