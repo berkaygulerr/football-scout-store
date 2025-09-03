@@ -5,6 +5,7 @@ import { UI_MESSAGES } from "@/lib/constants";
 import { Card, CardContent } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
+
 import { Trash2, TrendingUp, TrendingDown, ChevronRight, Calendar, Edit3, Check, X } from "lucide-react";
 import { useState } from "react";
 import { Textarea } from "./ui/textarea";
@@ -43,9 +44,10 @@ export default function PlayerCard({
   const [editedNotes, setEditedNotes] = useState(notes || "");
   const [isUpdatingNotes, setIsUpdatingNotes] = useState(false);
 
+
   const handleDelete = () => {
     if (onDelete) {
-      onDelete(player.player_id);
+      onDelete(player.id);
     }
   };
 
@@ -106,6 +108,7 @@ export default function PlayerCard({
   const randomColorClass = AVATAR_COLORS[player.name.length % AVATAR_COLORS.length];
 
   return (
+    <>
     <Card className="flat-card overflow-hidden mb-4 w-full">
       <CardContent className="p-5 space-y-4">
         <div className="flex items-start gap-3">
@@ -295,5 +298,8 @@ export default function PlayerCard({
         </div>
       </CardContent>
     </Card>
+
+
+    </>
   );
 }

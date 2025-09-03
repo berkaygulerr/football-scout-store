@@ -25,11 +25,15 @@ export async function DELETE(request: Request) {
       .select("player_id")
       .eq("id", id)
       .eq("user_id", session.user.id)
-      .single();
+      .maybeSingle();
 
     if (fetchError) {
       console.error("Supabase fetch error:", fetchError);
       return createApiError(fetchError.message, 500);
+    }
+
+    if (!playerData) {
+      return createApiError("Oyuncu bulunamadı veya silinmiş", 404);
     }
 
     const { error } = await serverSupabase

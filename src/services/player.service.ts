@@ -39,6 +39,8 @@ export class PlayerService {
       if (!id) throw new Error(UI_MESSAGES.INVALID_ID);
       
       const url = `${API_ENDPOINTS.SEARCH_PLAYER}?id=${id}`;
+
+      console.log("PlayerService.getPlayerById çağrılıyor:", { id, url });
       return await apiRequest<Player>(url);
     } catch (error) {
       throw new Error(handleApiError(error));

@@ -16,7 +16,7 @@ import { formatNumber } from "@/utils/formatNumber";
 
 interface AddPlayerToListProps {
   listId: string;
-  onPlayerAdded?: () => void;
+  onPlayerAdded?: (newPlayer?: Player & { notes?: string }) => void;
   existingPlayerIds?: number[]; // Zaten listedeki oyuncu ID'leri
 }
 
@@ -51,24 +51,39 @@ export default function AddPlayerToList({ listId, onPlayerAdded, existingPlayerI
     if (!selectedPlayer) return;
 
     setIsAdding(true);
+    
+    // Modal'ı kapat ve form'u temizle
+    setOpen(false);
+    setSelectedPlayer(null);
+    setSearchQuery("");
+    setSearchResults([]);
+    setNotes("");
+
+    // Önce callback'i çağır (optimistic update için)
+    if (onPlayerAdded) {
+      onPlayerAdded({
+        ...selectedPlayer,
+        notes: notes.trim() || undefined
+      });
+    }
+
+    // Başarı mesajı
+    toast.success("Oyuncu listeye eklendi");
+
+    // Arka planda ekleme işlemini yap
     try {
       await addPlayerToList(listId, {
         player_id: selectedPlayer.player_id,
         notes: notes.trim() || undefined
       });
-
-      toast.success("Oyuncu başarıyla listeye eklendi");
-      setOpen(false);
-      setSelectedPlayer(null);
-      setSearchQuery("");
-      setSearchResults([]);
-      setNotes("");
+    } catch (error) {
+      console.error('Add player error:', error);
       
+      // Hata durumunda listeyi yenile
       if (onPlayerAdded) {
         onPlayerAdded();
       }
-    } catch (error) {
-      console.error('Add player error:', error);
+      
       toast.error("Oyuncu eklenirken hata oluştu");
     } finally {
       setIsAdding(false);
@@ -118,7 +133,7 @@ export default function AddPlayerToList({ listId, onPlayerAdded, existingPlayerI
                       const results = searchPlayers(e.target.value);
                       // Zaten listedeki oyuncuları filtrele
                       const filteredResults = results.filter(player => 
-                        !existingPlayerIds.includes(player.id)
+                        !existingPlayerIds.includes(player.player_id)
                       );
                       setSearchResults(filteredResults);
                     } else {

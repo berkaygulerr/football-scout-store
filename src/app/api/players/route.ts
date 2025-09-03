@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
       ?.filter((item: any) => item.entity.team?.sport?.name === "Football")
       .slice(0, API_CONFIG.MAX_SEARCH_RESULTS)
       .map((item: any) => ({
-        id: item.entity.id,
+        player_id: item.entity.id,
         name: item.entity.name,
         team: item.entity.team?.name ?? UI_MESSAGES.NO_TEAM,
       })) || [];

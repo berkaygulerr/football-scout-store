@@ -147,7 +147,7 @@ export default function EditListPage() {
   const handleDelete = async () => {
     if (!user) return;
 
-    if (!confirm("Bu listeyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.")) {
+    if (!confirm("Bu listeyi silmek istediğinizden emin misiniz?")) {
       return;
     }
 

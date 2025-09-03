@@ -8,9 +8,11 @@ import SidePanel from "@/components/SidePanel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { RefreshCw, AlertCircle, TrendingUp } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { RefreshCw, AlertCircle, TrendingUp, Trash2 } from "lucide-react";
 import Link from "next/link";
 import FilterInfo from "@/components/FilterInfo";
+import { toast } from "sonner";
 
 // SearchParams kullanımı için ayrı bir bileşen
 function PlayersContent() {
@@ -38,6 +40,10 @@ function PlayersContent() {
   const filteredPlayers = getFilteredPlayers();
   const paginatedPlayers = getPaginatedPlayers();
   
+  // Delete modal state
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [playerToDelete, setPlayerToDelete] = useState<{ id: number; name: string } | null>(null);
+  
   useEffect(() => {
     setMounted(true);
     // Sayfa yüklendiğinde sadece arama ve takım filtrelerini sıfırla
@@ -64,17 +70,37 @@ function PlayersContent() {
     }
   }, [players, fetchCurrentPlayersData]);
 
-  const handlePlayerDelete = async (id: number) => {
+  const handlePlayerDelete = (id: number) => {
+    // Silinecek oyuncuyu bul
+    const playerToRemove = players.find(player => player.id === id);
+    if (!playerToRemove) return;
+
+    // Modal'ı aç
+    setPlayerToDelete({
+      id: id,
+      name: playerToRemove.name
+    });
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDeletePlayer = async () => {
+    if (!playerToDelete) return;
+
     try {
-      await deletePlayer(id);
+      await deletePlayer(playerToDelete.id);
+      setDeleteModalOpen(false);
+      setPlayerToDelete(null);
+      toast.success("Oyuncu başarıyla silindi");
     } catch (e) {
       console.error("Delete player error:", e);
+      toast.error("Oyuncu silinirken hata oluştu");
     }
   };
 
   const handlePlayerAdded = () => {
-    // Oyuncu eklendiğinde verileri yenile
-    fetchPlayers().catch(err => console.error("Fetch players error:", err));
+    // Store'da optimistic update yapıldığı için ekstra yenileme gerekmiyor
+    // fetchPlayers().catch(err => console.error("Fetch players error:", err));
+    toast.success("Oyuncu başarıyla eklendi");
   };
 
   if (!mounted) {
@@ -164,6 +190,35 @@ function PlayersContent() {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Oyuncuyu Sil</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-muted-foreground">
+              <span className="font-medium">{playerToDelete?.name}</span> oyuncusunu silmek istediğinizden emin misiniz?
+            </p>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteModalOpen(false)}
+            >
+              İptal
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDeletePlayer}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Sil
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

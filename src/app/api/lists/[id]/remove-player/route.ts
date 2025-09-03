@@ -34,9 +34,14 @@ export async function DELETE(
       .from('player_lists')
       .select('user_id')
       .eq('id', listId)
-      .single();
+      .maybeSingle();
 
-    if (listError || !listData) {
+    if (listError) {
+      console.error("Liste kontrolü hatası:", listError);
+      return createApiError("Liste kontrolü sırasında hata oluştu", 500);
+    }
+
+    if (!listData) {
       return createApiError("Liste bulunamadı", 404);
     }
 
@@ -49,9 +54,14 @@ export async function DELETE(
       .from('players')
       .select('id')
       .eq('player_id', playerId)
-      .single();
+      .maybeSingle();
 
-    if (playerError || !playerData) {
+    if (playerError) {
+      console.error("Oyuncu kontrolü hatası:", playerError);
+      return createApiError("Oyuncu kontrolü sırasında hata oluştu", 500);
+    }
+
+    if (!playerData) {
       return createApiError("Oyuncu bulunamadı", 404);
     }
 

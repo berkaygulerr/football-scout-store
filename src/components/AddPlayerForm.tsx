@@ -26,6 +26,7 @@ export default function AddPlayerForm({ onPlayerAdded }: AddPlayerFormProps) {
   const handlePlayerSelect = async (playerId: number) => {
     try {
       const player = await PlayerService.getPlayerById(playerId);
+      console.log("AddPlayerForm.handlePlayerSelect sonucu:", player);
       setSelectedPlayerId(playerId);
       setSelectedPlayerData(player);
       setFormError("");

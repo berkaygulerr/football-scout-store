@@ -156,43 +156,8 @@ export default function ListDetailPage() {
       items: updatedItems
     });
 
-    // Toast ile undo özelliği
-    toast.success("Oyuncu listeden silindi", {
-      description: "Geri almak için tıklayın",
-      action: {
-        label: "Geri Al",
-        onClick: async () => {
-          try {
-            // Geri al: Oyuncuyu tekrar ekle
-            const { data: newItem, error: insertError } = await createBrowserSupabaseClient()
-              .from('list_items')
-              .insert([{
-                list_id: list.id,
-                player_id: playerToRemove.player_id,
-                notes: playerToRemove.notes || null
-              }])
-              .select()
-              .single();
-
-            if (insertError) {
-              throw insertError;
-            }
-
-            // Listeyi güncelle
-            setList({
-              ...list,
-              items: [...list.items, { ...newItem, player: playerToRemove.player }]
-            });
-
-            toast.success("Oyuncu geri eklendi");
-          } catch (error) {
-            console.error('Geri alma hatası:', error);
-            toast.error("Geri alınamadı");
-          }
-        }
-      },
-      duration: 5000, // 5 saniye
-    });
+    // Başarı mesajı
+    toast.success("Oyuncu listeden silindi");
 
     // Arka planda silme işlemini yap
     try {
@@ -553,9 +518,26 @@ export default function ListDetailPage() {
               {isOwner && (
                 <AddPlayerToList 
                   listId={list.id} 
-                  onPlayerAdded={() => {
-                    // Oyuncu eklendikten sonra listeyi yenile
-                    fetchListData();
+                  onPlayerAdded={(newPlayer) => {
+                    // Optimistic update: Yeni oyuncuyu hemen listeye ekle
+                    if (newPlayer && list) {
+                      const newItem = {
+                        id: `temp-${Date.now()}`, // Geçici ID
+                        list_id: list.id,
+                        player_id: newPlayer.player_id,
+                        added_at: new Date().toISOString(),
+                        notes: newPlayer.notes || null,
+                        player: newPlayer
+                      };
+                      
+                      setList(prevList => ({
+                        ...prevList!,
+                        items: [...prevList!.items, newItem]
+                      }));
+                    } else {
+                      // Fallback: Listeyi yenile
+                      fetchListData();
+                    }
                   }}
                   existingPlayerIds={list.items.map(item => item.player?.player_id).filter(Boolean) as number[]}
                 />
@@ -600,9 +582,6 @@ export default function ListDetailPage() {
           <div className="py-4">
             <p className="text-sm text-muted-foreground">
               <span className="font-medium">{playerToDelete?.name}</span> oyuncusunu listeden silmek istediğinizden emin misiniz?
-            </p>
-            <p className="text-xs text-muted-foreground mt-2">
-              Bu işlem geri alınabilir.
             </p>
           </div>
           <DialogFooter>

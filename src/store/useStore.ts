@@ -154,11 +154,24 @@ export const useStore = create<AppStore>()(
 
       addPlayer: async (player: Player) => {
         set({ isLoading: true, error: null });
+        
+        // Optimistic update: Yeni oyuncuyu hemen listeye ekle
+        const { players: currentPlayers } = get();
+        const newPlayer = {
+          ...player,
+          id: Date.now(), // Geçici ID
+        };
+        set({ 
+          players: [...currentPlayers, newPlayer], 
+          isLoading: false 
+        });
+        
         try {
           await PlayerService.createPlayer(player);
-          // Yeni oyuncu eklendikten sonra listeyi güncelle
+          
+          // Başarılı olduktan sonra gerçek veriyi al
           const data = await PlayerService.getPlayers();
-          set({ players: data, isLoading: false });
+          set({ players: data });
           
           // Yeni oyuncu için current data'yı da fetch et
           if (data.length > 0) {
@@ -166,7 +179,12 @@ export const useStore = create<AppStore>()(
             await get().fetchCurrentPlayersData(ids);
           }
         } catch (error) {
-          set({ error: handleApiError(error), isLoading: false });
+          // Hata durumunda optimistic update'i geri al
+          set({ 
+            players: currentPlayers, 
+            error: handleApiError(error), 
+            isLoading: false 
+          });
         }
       },
 
