@@ -49,7 +49,7 @@ export default function UserFollowersPage() {
       }
       
       // User yüklendi ama giriş yapmamışsa login'e yönlendir
-      if (user === false) {
+      if (!user) {
         router.push('/login');
         return;
       }
