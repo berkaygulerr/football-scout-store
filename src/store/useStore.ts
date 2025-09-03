@@ -3,6 +3,7 @@ import { devtools } from 'zustand/middleware';
 import { Player, CurrentPlayerData } from '@/types/player.types';
 import { PlayerService } from '@/services/player.service';
 import { handleApiError } from '@/lib/api-utils';
+import { AddListItemSchema } from '@/types/list.types';
 
 // Types
 interface FilterOptions {
@@ -19,7 +20,7 @@ interface FilterOptions {
 interface AppStore {
   // Players State
   players: Player[];
-  currentPlayersData: Record<string, Player>;
+  currentPlayersData: Record<string, any>;
   isLoading: boolean;
   error: string | null;
 
@@ -35,6 +36,9 @@ interface AppStore {
   fetchCurrentPlayersData: (ids: number[]) => Promise<void>;
   addPlayer: (player: Player) => Promise<void>;
   deletePlayer: (id: number) => Promise<void>;
+  addPlayerToList: (listId: string, data: AddListItemSchema) => Promise<void>;
+  removePlayerFromList: (listId: string, playerId: number) => Promise<void>;
+  searchPlayers: (query: string) => Player[];
   
   // Filter Actions
   setSearchQuery: (query: string) => void;
@@ -70,8 +74,8 @@ const defaultFilters: FilterOptions = {
 };
 
 // Değer değişim yüzdesini hesapla
-const calculateValueChange = (player: Player, currentData: Record<string, Player>): number => {
-  const current = currentData[player.id];
+const calculateValueChange = (player: Player, currentData: Record<string, any>): number => {
+  const current = currentData[player.player_id];
   
   // Güncel veri yoksa değişim yok
   if (!current) return 0;
@@ -83,7 +87,7 @@ const calculateValueChange = (player: Player, currentData: Record<string, Player
   return ((current.market_value - player.market_value) / player.market_value) * 100;
 };
 
-const getSortValue = (player: Player, currentData: Record<string, Player>, sortBy: FilterOptions['sortBy']): string | number => {
+const getSortValue = (player: Player, currentData: Record<string, any>, sortBy: FilterOptions['sortBy']): string | number => {
   switch (sortBy) {
     case 'name':
     case 'team':
@@ -92,7 +96,9 @@ const getSortValue = (player: Player, currentData: Record<string, Player>, sortB
     case 'market_value':
       return player[sortBy] || 0;
     case 'player_id':
-      return player.player_id || 0;
+      const playerId = player.id || 0;
+
+      return playerId;
     case 'created_at':
       return player.created_at ? new Date(player.created_at).getTime() : 0;
     case 'value_increase':
@@ -129,7 +135,7 @@ export const useStore = create<AppStore>()(
       fetchCurrentPlayersData: async (ids: number[]) => {
         try {
           const data = await PlayerService.getCurrentPlayersData(ids);
-          const dataMap: Record<string, Player> = {};
+          const dataMap: Record<string, any> = {};
           
           data.forEach(item => {
             if (item.data && item.id) {
@@ -137,7 +143,10 @@ export const useStore = create<AppStore>()(
             }
           });
           
-          set({ currentPlayersData: dataMap });
+          // Mevcut current data'ya ekle, tamamen değiştirme
+          set((state) => ({
+            currentPlayersData: { ...state.currentPlayersData, ...dataMap }
+          }));
         } catch (error) {
           console.error('Error fetching current players data:', error);
         }
@@ -150,6 +159,12 @@ export const useStore = create<AppStore>()(
           // Yeni oyuncu eklendikten sonra listeyi güncelle
           const data = await PlayerService.getPlayers();
           set({ players: data, isLoading: false });
+          
+          // Yeni oyuncu için current data'yı da fetch et
+          if (data.length > 0) {
+            const ids = data.map(p => p.player_id);
+            await get().fetchCurrentPlayersData(ids);
+          }
         } catch (error) {
           set({ error: handleApiError(error), isLoading: false });
         }
@@ -162,9 +177,83 @@ export const useStore = create<AppStore>()(
           // Oyuncu silindikten sonra listeyi güncelle
           const data = await PlayerService.getPlayers();
           set({ players: data, isLoading: false });
+          
+          // Silinen oyuncuyu current data'dan da kaldır
+          const { currentPlayersData } = get();
+          const newCurrentData = { ...currentPlayersData };
+          delete newCurrentData[id];
+          set({ currentPlayersData: newCurrentData });
         } catch (error) {
           set({ error: handleApiError(error), isLoading: false });
         }
+      },
+
+      addPlayerToList: async (listId: string, data: AddListItemSchema) => {
+        set({ isLoading: true, error: null });
+        try {
+          const response = await fetch(`/api/lists/${listId}/add-player`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Oyuncu eklenirken hata oluştu');
+          }
+
+          const result = await response.json();
+          set({ isLoading: false });
+          return result;
+        } catch (error) {
+          set({ error: handleApiError(error), isLoading: false });
+          throw error;
+        }
+      },
+
+      removePlayerFromList: async (listId: string, playerId: number) => {
+        set({ isLoading: true, error: null });
+        try {
+
+          const response = await fetch(`/api/lists/${listId}/remove-player?player_id=${playerId}`, {
+            method: 'DELETE',
+          });
+
+
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Remove player error response:', errorData);
+            throw new Error(errorData.message || 'Oyuncu silinirken hata oluştu');
+          }
+
+          const result = await response.json();
+
+          set({ isLoading: false });
+          return result;
+        } catch (error) {
+          console.error('Remove player error:', error);
+          set({ error: handleApiError(error), isLoading: false });
+          throw error;
+        }
+      },
+
+      searchPlayers: (query: string) => {
+        const { players } = get();
+        
+        if (!query.trim() || !players || players.length === 0) {
+          return [];
+        }
+
+        const searchTerm = query.toLowerCase().trim();
+        
+        return players.filter(player => {
+          const nameMatch = player.name?.toLowerCase().includes(searchTerm);
+          const teamMatch = player.team?.toLowerCase().includes(searchTerm);
+          return nameMatch || teamMatch;
+        }).slice(0, 20); // Maksimum 20 sonuç döndür
       },
 
       // Filter Actions
@@ -210,6 +299,7 @@ export const useStore = create<AppStore>()(
       },
 
       resetFilters: () => {
+
         set({ filters: {...defaultFilters}, currentPage: 1 });
       },
 
@@ -235,12 +325,12 @@ export const useStore = create<AppStore>()(
         // Transfer olanlar kategorisi için özel filtre
         if (filters.showTransfers) {
           return players.filter(player => {
-            const current = currentPlayersData[player.id];
+            const current = currentPlayersData[player.player_id];
             return current && current.team !== player.team;
           }).sort((a, b) => {
             // En son transfer olanlar önce
-            const aId = a.player_id || 0;
-            const bId = b.player_id || 0;
+            const aId = a.id || 0;
+            const bId = b.id || 0;
             return bId - aId;
           });
         }
@@ -275,6 +365,8 @@ export const useStore = create<AppStore>()(
         return filtered.sort((a, b) => {
           const aValue = getSortValue(a, currentPlayersData, filters.sortBy);
           const bValue = getSortValue(b, currentPlayersData, filters.sortBy);
+
+
 
           if (aValue < bValue) return filters.sortOrder === 'asc' ? -1 : 1;
           if (aValue > bValue) return filters.sortOrder === 'asc' ? 1 : -1;
@@ -318,6 +410,8 @@ export const useStore = create<AppStore>()(
           .map(([name, count]) => ({ name, count }))
           .sort((a, b) => a.name.localeCompare(b.name));
       },
+
+
     }),
     { name: 'app-store' }
   )

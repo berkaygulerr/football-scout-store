@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/auth-provider";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Info, RefreshCw } from "lucide-react";
 import Link from "next/link";
@@ -173,11 +174,11 @@ function RegisterContent() {
 
             <div className="space-y-2">
               <Label htmlFor="password">Şifre</Label>
-              <Input 
+              <PasswordInput 
                 id="password" 
-                type="password" 
                 value={password} 
                 onChange={(e) => setPassword(e.target.value)} 
+                placeholder="Güçlü bir şifre oluşturun"
                 required 
                 disabled={isLoading}
               />

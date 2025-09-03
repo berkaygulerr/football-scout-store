@@ -19,6 +19,19 @@ export async function DELETE(request: Request) {
       return createApiError("Geçersiz ID", 400);
     }
 
+    // Önce player_id'yi bul
+    const { data: playerData, error: fetchError } = await serverSupabase
+      .from("players")
+      .select("player_id")
+      .eq("id", id)
+      .eq("user_id", session.user.id)
+      .single();
+
+    if (fetchError) {
+      console.error("Supabase fetch error:", fetchError);
+      return createApiError(fetchError.message, 500);
+    }
+
     const { error } = await serverSupabase
       .from("players")
       .delete()
@@ -30,8 +43,10 @@ export async function DELETE(request: Request) {
       return createApiError(error.message, 500);
     }
 
-    // Redis'ten de sil
-    await redis.del(`player:${id}`);
+    // Redis'ten de sil (player_id kullanarak)
+    if (playerData?.player_id) {
+      await redis.del(`player:${playerData.player_id}`);
+    }
 
     return createApiResponse({ message: UI_MESSAGES.DELETE_SUCCESS });
   } catch (err) {

@@ -8,6 +8,8 @@ export async function POST(request: Request) {
     const body = await request.json();
     const ids: string[] = body.ids;
 
+
+
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
       return createApiError("Geçersiz veya eksik ID'ler", 400);
     }
@@ -20,11 +22,28 @@ export async function POST(request: Request) {
 
     const results = await pipeline.exec();
 
+
     // Player verilerini eşle
-    const responseData = ids.map((id, index) => ({
-      id,
-      data: results?.[index] ?? null,
-    }));
+    const responseData = ids.map((id, index) => {
+      const data = results?.[index] ?? null;
+
+      
+      let parsedData = null;
+      if (data) {
+        try {
+          parsedData = typeof data === 'string' ? JSON.parse(data) : data;
+        } catch (e) {
+          console.error(`Failed to parse data for player ${id}:`, e);
+        }
+      }
+      
+
+      return {
+        id,
+        data: parsedData,
+      };
+    });
+
 
     return createApiResponse(responseData);
   } catch (error) {

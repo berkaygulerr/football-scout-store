@@ -25,11 +25,12 @@ export async function GET(req: NextRequest) {
     const { player } = await response.json();
 
     const formattedData = {
-      id: player.id,
+      player_id: player.id, // Dış API'den gelen oyuncu ID'si
       name: player.name,
       age: formatAge(player.dateOfBirthTimestamp),
       team: player.team?.name ?? "Takım bilgisi yok",
       market_value: player.proposedMarketValue ?? 0,
+      value_change: player.valueChange ?? undefined, // Değer değişimi varsa ekle
     };
 
     return createApiResponse(formattedData);

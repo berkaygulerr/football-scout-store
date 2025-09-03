@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-provider";
 import { Button } from "@/components/ui/button";
 import { LogOut, User } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useEffect, useState } from "react";
 import { createBrowserSupabaseClient } from "@/lib/supabase-browser";
 
@@ -74,14 +74,13 @@ export default function AuthButton() {
           <span className="font-medium text-xs sm:text-sm">{userInitial}</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="flex flex-col gap-1">
-          <div className="flex items-center gap-2">
-            <User className="h-4 w-4 text-muted-foreground" />
-            <span className="font-medium text-sm">{username}</span>
-          </div>
-          <span className="text-xs text-muted-foreground truncate">{user.email}</span>
-        </DropdownMenuLabel>
+      <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuItem asChild>
+          <Link href={`/profile/${username}`} className="cursor-pointer text-xs sm:text-sm">
+            <User className="mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span>Profilim</span>
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive focus:text-destructive text-xs sm:text-sm">
           <LogOut className="mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />

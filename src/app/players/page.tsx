@@ -28,8 +28,10 @@ function PlayersContent() {
     getFilteredPlayers,
     getPaginatedPlayers,
     setSearchQuery,
+    setTeamFilter,
     setSorting,
     setAgeRange,
+    resetFilters,
 
   } = useStore();
 
@@ -38,7 +40,11 @@ function PlayersContent() {
   
   useEffect(() => {
     setMounted(true);
-  }, []);
+    // Sayfa yüklendiğinde sadece arama ve takım filtrelerini sıfırla
+    // showTransfers filtresini koru
+    setSearchQuery('');
+    setTeamFilter('');
+  }, [setSearchQuery, setTeamFilter]);
 
   // URL parametreleri kaldırıldı - sadece manuel filtreleme
 
@@ -53,7 +59,7 @@ function PlayersContent() {
 
   useEffect(() => {
     if (players && players.length > 0) {
-      const ids = players.map(p => p.id);
+      const ids = players.map(p => p.player_id);
       fetchCurrentPlayersData(ids).catch(err => console.error("Fetch current data error:", err));
     }
   }, [players, fetchCurrentPlayersData]);

@@ -7,7 +7,7 @@ import { Loader2, Search } from "lucide-react";
 
 interface PlayerListProps {
   players: Player[];
-  currentPlayersData: Record<string, Player>;
+  currentPlayersData: Record<string, any>;
   isLoading: boolean;
   onDelete: (id: number) => void;
 }
@@ -52,7 +52,7 @@ export default function PlayerList({
           <div key={player.id} className="break-inside-avoid mb-4">
             <PlayerCard
               player={player}
-              currentData={currentPlayersData[player.id]}
+              currentData={currentPlayersData[player.player_id]}
               onDelete={onDelete}
             />
           </div>

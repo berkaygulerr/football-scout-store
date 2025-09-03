@@ -54,7 +54,7 @@ function HomeContent() {
 
   useEffect(() => {
     if (players && players.length > 0) {
-      const ids = players.map(p => p.id);
+      const ids = players.map(p => p.player_id);
       fetchCurrentPlayersData(ids).catch(err => console.error("Fetch current data error:", err));
     }
   }, [players, fetchCurrentPlayersData]);
@@ -96,11 +96,11 @@ function HomeContent() {
         try {
           const playersWithIncrease = players
             .filter(player => {
-              const current = currentData[player.id];
+              const current = currentData[player.player_id];
               return current && current.market_value > player.market_value;
             })
             .map(player => {
-              const current = currentData[player.id];
+              const current = currentData[player.player_id];
               const percentChange = ((current.market_value - player.market_value) / player.market_value) * 100;
               return { player, percentChange };
             })
@@ -125,13 +125,13 @@ function HomeContent() {
         try {
           const transferredPlayers = players
             .filter(player => {
-              const current = currentData[player.id];
+              const current = currentData[player.player_id];
               return current && current.team !== player.team;
             })
             .sort((a, b) => {
               // En son transfer olanlar önce
-              const aId = a.player_id || 0;
-              const bId = b.player_id || 0;
+              const aId = a.id || 0;
+              const bId = b.id || 0;
               return bId - aId;
             });
           
@@ -189,11 +189,11 @@ function HomeContent() {
         try {
           const playersWithDecrease = players
             .filter(player => {
-              const current = currentData[player.id];
+              const current = currentData[player.player_id];
               return current && current.market_value < player.market_value;
             })
             .map(player => {
-              const current = currentData[player.id];
+              const current = currentData[player.player_id];
               const percentChange = ((player.market_value - current.market_value) / player.market_value) * 100;
               return { player, percentChange };
             })
@@ -218,8 +218,8 @@ function HomeContent() {
         try {
           return [...players]
             .sort((a, b) => {
-              const aId = a.player_id || 0;
-              const bId = b.player_id || 0;
+              const aId = a.id || 0;
+              const bId = b.id || 0;
               return bId - aId;
             })
             .slice(0, 3);
@@ -316,7 +316,7 @@ function HomeContent() {
                     <RefreshCw className="h-4 w-4 animate-spin text-primary inline" />
                   ) : (
                     players?.filter(p => {
-                      const current = currentPlayersData?.[p.id];
+                      const current = currentPlayersData?.[p.player_id];
                       return current && current.market_value > p.market_value;
                     }).length || 0
                   )}
@@ -329,7 +329,7 @@ function HomeContent() {
                     <RefreshCw className="h-4 w-4 animate-spin text-primary inline" />
                   ) : (
                     players?.filter(p => {
-                      const current = currentPlayersData?.[p.id];
+                      const current = currentPlayersData?.[p.player_id];
                       return current && current.market_value < p.market_value;
                     }).length || 0
                   )}
@@ -342,7 +342,7 @@ function HomeContent() {
                     <RefreshCw className="h-4 w-4 animate-spin text-primary inline" />
                   ) : (
                     players?.filter(p => {
-                      const current = currentPlayersData?.[p.id];
+                      const current = currentPlayersData?.[p.player_id];
                       return current && current.market_value === p.market_value;
                     }).length || 0
                   )}
@@ -387,7 +387,7 @@ function HomeContent() {
                       <PlayerCard 
                         key={player.id} 
                         player={player}
-                        currentData={currentPlayersData?.[player.id]}
+                        currentData={currentPlayersData?.[player.player_id]}
                         onDelete={deletePlayer}
                       />
                     ))}

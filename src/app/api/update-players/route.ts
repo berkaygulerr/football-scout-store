@@ -9,7 +9,7 @@ export async function GET() {
     // Secret key ile tüm oyuncuları getir
     const { data: players, error } = await supabase
       .from("players")
-      .select("id");
+      .select("id, player_id");
 
     if (error) {
       console.error("Supabase error:", error.message);
@@ -25,19 +25,19 @@ export async function GET() {
     for (const player of players) {
       try {
         // Next.js 13.4+ için önerilen fetch yapısı
-        const response = await fetch(`https://scout.goldenfut.com/api/search-player?id=${player.id}`, {
+        const response = await fetch(`https://scout.goldenfut.com/api/search-player?id=${player.player_id}`, {
           next: { revalidate: 0 }, // no-store yerine revalidate: 0 kullan
         });
 
         if (!response.ok) {
-          console.error(`Failed to fetch player ${player.id}:`, response.statusText);
+          console.error(`Failed to fetch player ${player.player_id}:`, response.statusText);
           results.push({ id: player.id, status: 'error', message: response.statusText });
           continue;
         }
 
         const data = await response.json();
-        await redis.set(`player:${player.id}`, JSON.stringify(data));
-        console.log(`Player ${player.id} data cached in Redis.`);
+        await redis.set(`player:${player.player_id}`, JSON.stringify(data));
+
         results.push({ id: player.id, status: 'success' });
       } catch (err) {
         console.error(`Error fetching player ${player.id}:`, err);

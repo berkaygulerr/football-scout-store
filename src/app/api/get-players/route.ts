@@ -18,7 +18,7 @@ export async function GET() {
       .from("players")
       .select("*")
       .eq("user_id", session.user.id)
-      .order("player_id", { ascending: false });
+      .order("id", { ascending: false });
 
     if (error) {
       console.error("Supabase error:", error);

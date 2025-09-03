@@ -5,14 +5,18 @@ import { UI_MESSAGES } from "@/lib/constants";
 import { Card, CardContent } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
-import { Trash2, TrendingUp, TrendingDown, ChevronRight, Calendar } from "lucide-react";
+import { Trash2, TrendingUp, TrendingDown, ChevronRight, Calendar, Edit3, Check, X } from "lucide-react";
 import { useState } from "react";
+import { Textarea } from "./ui/textarea";
 import { formatDate, formatShortDate } from "@/utils/formatDate";
 
 interface PlayerCardProps {
   player: Player;
-  currentData?: Player;
-  onDelete: (id: number) => void;
+  currentData?: any;
+  onDelete?: (id: number) => void;
+  notes?: string | null;
+  onUpdateNotes?: (playerId: number, notes: string) => Promise<void>;
+  canEdit?: boolean;
 }
 
 const AVATAR_COLORS = [
@@ -30,12 +34,43 @@ export default function PlayerCard({
   player,
   currentData,
   onDelete,
+  notes,
+  onUpdateNotes,
+  canEdit = false,
 }: PlayerCardProps) {
   const [imageError, setImageError] = useState(false);
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [editedNotes, setEditedNotes] = useState(notes || "");
+  const [isUpdatingNotes, setIsUpdatingNotes] = useState(false);
 
   const handleDelete = () => {
-    if (confirm("Bu oyuncuyu silmek istediğinizden emin misiniz?")) {
-      onDelete(player.id);
+    if (onDelete) {
+      onDelete(player.player_id);
+    }
+  };
+
+  const handleEditNotes = () => {
+    setIsEditingNotes(true);
+    setEditedNotes(notes || "");
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingNotes(false);
+    setEditedNotes(notes || "");
+  };
+
+  const handleSaveNotes = async () => {
+    if (!onUpdateNotes) return;
+    
+    setIsUpdatingNotes(true);
+    try {
+      await onUpdateNotes(player.player_id, editedNotes);
+      setIsEditingNotes(false);
+    } catch (error) {
+      console.error('Not güncelleme hatası:', error);
+      // Hata durumunda düzenleme modunu kapatma, kullanıcı tekrar deneyebilsin
+    } finally {
+      setIsUpdatingNotes(false);
     }
   };
 
@@ -44,6 +79,19 @@ export default function PlayerCard({
     player.age !== currentData.age ||
     player.market_value !== currentData.market_value
   );
+
+  // Player null kontrolü
+  if (!player) {
+    return (
+      <Card className="flat-card overflow-hidden mb-4 w-full">
+        <CardContent className="p-5">
+          <div className="text-center text-muted-foreground">
+            Oyuncu bilgileri yükleniyor...
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const displayData = currentData || player;
   const valueChange = currentData ? currentData.market_value - player.market_value : 0;
@@ -104,14 +152,16 @@ export default function PlayerCard({
             )}
           </div>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleDelete}
-            className="flat-button text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-8 w-8"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          {onDelete && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleDelete}
+              className="flat-button text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-8 w-8"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
         </div>
 
         <div className="space-y-3">
@@ -180,6 +230,68 @@ export default function PlayerCard({
                 )}
             </div>
           </div>
+
+          {/* Notlar */}
+          {(notes || canEdit) && (
+            <div className="mt-3 pt-3 border-t border-muted">
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-xs text-muted-foreground">Notlar:</div>
+                {canEdit && !isEditingNotes && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleEditNotes}
+                    className="h-6 w-6 p-0"
+                  >
+                    <Edit3 className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
+              
+              {isEditingNotes ? (
+                <div className="space-y-2">
+                  <Textarea
+                    value={editedNotes}
+                    onChange={(e) => setEditedNotes(e.target.value)}
+                    placeholder="Notlarınızı buraya yazın..."
+                    className="min-h-[60px] text-sm"
+                    maxLength={500}
+                  />
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">
+                      {editedNotes.length}/500 karakter
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleCancelEdit}
+                        disabled={isUpdatingNotes}
+                        className="h-6 w-6 p-0"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleSaveNotes}
+                        disabled={isUpdatingNotes}
+                        className="h-6 w-6 p-0"
+                      >
+                        <Check className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                notes && (
+                  <p className="text-sm text-foreground leading-relaxed">
+                    {notes}
+                  </p>
+                )
+              )}
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

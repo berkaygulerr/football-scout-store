@@ -227,7 +227,7 @@ export default function PlayerFilters() {
           {filters.showTransfers && (
             <div className="rounded-md bg-purple-50 dark:bg-purple-900/20 p-2 text-xs text-purple-700 dark:text-purple-300">
               <p>Takımı değişen {players?.filter(p => {
-                const current = currentPlayersData?.[p.id];
+                const current = currentPlayersData?.[p.player_id];
                 return current && current.team !== p.team;
               }).length || 0} oyuncu görüntüleniyor.</p>
             </div>

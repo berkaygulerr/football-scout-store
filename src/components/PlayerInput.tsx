@@ -43,7 +43,7 @@ export default function PlayerInput({ onSelect, disabled, className }: PlayerInp
   }, [query]);
 
   const handleSelect = (player: BasePlayer) => {
-    onSelect(player.id);
+    onSelect(player.player_id);
     setQuery('');
     setShowResults(false);
   };
@@ -72,7 +72,7 @@ export default function PlayerInput({ onSelect, disabled, className }: PlayerInp
         <ul className="absolute z-10 w-full bg-popover rounded mt-1 max-h-80 overflow-y-auto border-0 shadow-none">
           {players.slice(0, MAX_RESULTS).map((player) => (
             <li
-              key={player.id}
+              key={player.player_id}
               className="px-4 py-2 hover:bg-accent cursor-pointer transition-colors"
               onClick={() => handleSelect(player)}
             >

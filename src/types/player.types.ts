@@ -5,7 +5,7 @@ import { API_CONFIG } from "@/lib/constants";
  * Temel oyuncu bilgileri
  */
 export interface BasePlayer {
-  id: number;
+  player_id: number;
   name: string;
   team: string;
 }
@@ -14,10 +14,11 @@ export interface BasePlayer {
  * Detaylı oyuncu bilgileri
  */
 export interface Player extends BasePlayer {
+  id: number; // Primary key (eklenme sırası)
   age: number;
   market_value: number;
-  player_id?: number;
   created_at?: string;
+  value_change?: number; // Değer değişimi (yüzde olarak)
 }
 
 /**
@@ -29,15 +30,15 @@ export type PlayerSearchResult = BasePlayer;
  * Güncel oyuncu verisi
  */
 export interface CurrentPlayerData {
-  id: string;
-  data: Player | null;
+  id: string; // player_id (oyuncu ID)
+  data: any | null; // Current data from Redis
 }
 
 /**
  * Oyuncu şeması (validasyon için)
  */
 export const playerSchema = z.object({
-  id: z.number(),
+  player_id: z.number(),
   name: z.string()
     .min(2, "İsim en az 2 karakter olmalıdır")
     .max(100, "İsim en fazla 100 karakter olabilir"),
@@ -53,8 +54,6 @@ export const playerSchema = z.object({
   market_value: z.number()
     .min(API_CONFIG.MIN_MARKET_VALUE, `Market değeri en az ${API_CONFIG.MIN_MARKET_VALUE} olmalıdır`)
     .max(API_CONFIG.MAX_MARKET_VALUE, `Market değeri en fazla ${API_CONFIG.MAX_MARKET_VALUE} olabilir`),
-  
-  player_id: z.number().optional(),
 });
 
 /**

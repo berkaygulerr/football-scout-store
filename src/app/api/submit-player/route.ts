@@ -26,7 +26,14 @@ export async function POST(request: NextRequest) {
 
     const { error } = await serverSupabase
       .from("players")
-      .insert([{ ...parsed.data, user_id: session.user.id }]);
+      .insert([{ 
+        player_id: parsed.data.player_id,
+        name: parsed.data.name,
+        team: parsed.data.team,
+        age: parsed.data.age,
+        market_value: parsed.data.market_value,
+        user_id: session.user.id 
+      }]);
 
     if (error) {
       console.error("Supabase error:", error);
@@ -34,7 +41,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Redis'e de kaydet
-    await redis.set(`player:${parsed.data.id}`, JSON.stringify(parsed.data));
+    await redis.set(`player:${parsed.data.player_id}`, JSON.stringify(parsed.data));
 
     return createApiResponse({ message: UI_MESSAGES.ADD_SUCCESS });
   } catch (err) {
